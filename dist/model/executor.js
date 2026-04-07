@@ -307,8 +307,17 @@ class Executor {
         }
         return result;
     }
-    async aggregation() {
-        return [];
+    async Aggregate(options) {
+        if (typeof this.schema.hooks.beforeAggregate === "function") {
+            options = await this.schema.hooks.beforeAggregate(options) || options;
+        }
+        const { sql, params } = (0, parse_1.parseAggregate)(this.table, options);
+        const finalSql = `SELECT ${sql}`;
+        const result = await this.execute(finalSql, params);
+        if (typeof this.schema.hooks.AFterAggregate === "function") {
+            return await this.schema.hooks.AFterAggregate(result);
+        }
+        return result;
     }
 }
 exports.default = Executor;

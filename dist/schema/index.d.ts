@@ -1,6 +1,6 @@
 import { ResultSetHeader } from "mysql2/promise";
 import { FieldConstraints, FieldSchema, DefineTpe } from "./fieldConstraints";
-import { Query } from "../parse/operators";
+import { Query, AggregationOptions } from "../parse/operators";
 import { QueryResult } from "mysql2/promise";
 export declare enum DataType {
     Tinyint = "TINYINT",
@@ -53,7 +53,7 @@ export declare class FieldSchemaBuilder {
 }
 type FieldsMap<T> = Record<keyof T, FieldSchema>;
 type QueryResultItem<T> = T[] | T | QueryResult;
-type SchemaHooks<T> = {
+type SchemaHooks<T, P = any> = {
     beforeInsert?: (data: T) => Promise<T | void>;
     afterInsert?: (data: T) => Promise<ResultSetHeader>;
     beforeUpdate?: (query: Query<T>, data: Partial<T>) => Promise<[Query<T>, Partial<T>]>;
@@ -62,6 +62,8 @@ type SchemaHooks<T> = {
     afterDelete?: (data: T) => Promise<ResultSetHeader>;
     beforeFind?: (query: Query<T>) => Promise<Query<T>>;
     afterFind?: (results: QueryResultItem<T>) => Promise<QueryResultItem<T>>;
+    beforeAggregate?: (query: AggregationOptions<T>) => Promise<AggregationOptions<T>>;
+    AFterAggregate?: (results: QueryResultItem<P>) => Promise<QueryResultItem<P>>;
 };
 export declare class Schema<T> {
     fields: FieldsMap<T>;

@@ -41,3 +41,37 @@ export function isObject(value: any) {
 export function isStringArray(value: any) {
     return (Array.isArray(value) && value.every(item => typeof item === 'string'));
 }
+
+
+export function parseObjectKeys(datas: any): string {
+    if (!isObject(datas)) return '';
+    
+    let parts: string[] = [];
+    const queue: any[] = [datas];
+
+    while (queue.length) {
+        const obj = queue.shift();
+        // 1. 必须排序！保证 {a,b} 和 {b,a} 生成同一个 Key
+        const keys = Object.keys(obj).sort(); 
+        
+        for (const key of keys) {
+            const item = obj[key];
+            // 2. 加入分隔符，防止 userid 和 user.id 混淆
+            parts.push(key); 
+
+            if (item && typeof item === 'object') {
+                if (Array.isArray(item)) {
+                    parts.push('[]'); // 标识数组结构
+                    for (const i of item) {
+                        if (isObject(i)) queue.push(i);
+                    }
+                } else {
+                    parts.push('{}'); // 标识嵌套结构
+                    queue.push(item);
+                }
+            }
+        }
+    }
+    // 3. 用特殊字符连接，确保唯一性
+    return parts.join('|'); 
+}

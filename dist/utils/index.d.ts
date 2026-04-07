@@ -11,4 +11,5 @@ export declare function quoteAll(identifiers: string[]): string;
 export declare function parseJson(key: string): string;
 export declare function isObject(value: any): boolean;
 export declare function isStringArray(value: any): value is string[];
+export declare function parseObjectKeys(datas: any): string;
 //# sourceMappingURL=index.d.ts.map

@@ -6,13 +6,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = parseQuery;
 const index_1 = require("./operators/index");
 const regex_1 = __importDefault(require("./operators/regex"));
+const queryCache = new Map();
 // 校验是否为合法的逻辑子项数组
 function parseQuery(query) {
     const params = [];
     const parse = (query) => {
         const segments = [];
         const keys = Object.keys(query);
-        for (const key of keys) {
+        for (let key of keys) {
             const value = query[key]; // 现在不报错了
             if (index_1.LogicalMap[key]) {
                 if (!Array.isArray(value)) {
@@ -48,9 +49,7 @@ function parseQuery(query) {
             if (key.includes('.')) {
                 const [column, ...path] = key.split('.');
                 const jsonPath = `$.${path.join('.')}`;
-                segments.push(`${column}->>'${jsonPath}' = ?`);
-                params.push(value);
-                continue;
+                key = `${column}->>'${jsonPath}'`;
             }
             // 2. 处理普通字段
             if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -58,6 +57,9 @@ function parseQuery(query) {
                 for (const op of keys) {
                     if (!op.startsWith("$")) {
                         throwError(`Ambiguous query at "${key}": SQL databases do not support implicit nested objects ${JSON.stringify(value)}. Did you mean "${key}.field" (JSON path) or an operator like "$eq"?`);
+                    }
+                    if (!index_1.QueryOperatorMap[op]) {
+                        throwError(`Invalid operator "${op}" at "${key}"`);
                     }
                     let val = value[op];
                     if (op === '$between') {
@@ -83,13 +85,16 @@ function parseQuery(query) {
                             params.push(...val);
                         }
                         else if (op == "$like" || op == "$nlike") {
-                            if (val && typeof val !== "string" || typeof val !== 'number') {
+                            if (val && typeof val !== "string" && typeof val !== 'number') {
                                 throwError(`"${op}" at "${key}" only accepts string or number values. Received: ${typeof val}`);
                             }
                             segments.push(`${key} ${index_1.QueryOperatorMap[op]} ?`);
                             params.push(val);
                         }
                         else {
+                            if (val && typeof val !== "string" && typeof val !== 'number') {
+                                throwError(`"${op}" at "${key}" only accepts string or number values. Received: ${typeof val}`);
+                            }
                             const sqlOp = index_1.QueryOperatorMap[op];
                             segments.push(`${key} ${sqlOp} ?`);
                             params.push(value[op]);

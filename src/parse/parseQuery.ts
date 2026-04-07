@@ -1,11 +1,14 @@
-import { isObject } from "../utils";
+import { parseObjectKeys } from "../utils";
 import { LogicalMap, QueryOperatorMap } from "./operators/index";
 import type { Query, Logical, QueryOperators, } from "./operators/index";
 import jsRegexToMySQL from "./operators/regex"
 type OperatorKeys = keyof QueryOperators<any>;
+
+const queryCache = new Map<string, string>();
 // 校验是否为合法的逻辑子项数组
 export default function parseQuery<T>(query: Query<T>): { sql: string, params: any[] } {
     const params: any[] = [];
+
     const parse = (query: Query<T>) => {
         const segments: string[] = [];
         const keys = Object.keys(query) as Array<keyof Query<T>>;
@@ -108,11 +111,11 @@ export default function parseQuery<T>(query: Query<T>): { sql: string, params: a
 
                         } else if (op == "$like" || op == "$nlike") {
 
-                            
+
                             if (val && typeof val !== "string" && typeof val !== 'number') {
-                            
+
                                 throwError(`"${op}" at "${key}" only accepts string or number values. Received: ${typeof val}`)
-                            
+
                             }
 
                             segments.push(`${key} ${QueryOperatorMap[op as OperatorKeys]} ?`);
