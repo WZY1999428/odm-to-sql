@@ -1,0 +1,1 @@
+可以使用 像mongodb那样的api使用mysql 查询
