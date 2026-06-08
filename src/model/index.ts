@@ -2,7 +2,7 @@ import Cleint from "../client";
 import Executor from "./executor";
 import { Schema } from "../schema";
 import type { Query } from "../parse/operators/index"
-import type { FindOptions, FindOneOptions, InsertOptions, insertManyOptions } from "./options"
+import type { FindOptions, FindOneOptions, InsertOptions, insertManyOptions, AggregationOptions } from "./options"
 
 
 class Model<T> {
@@ -55,6 +55,7 @@ class Model<T> {
         const execute = new Executor(this.client, this.table, this.schema)
         return execute.insert(data, opt);
     }
+    
     async insertMany(data: T[], opt?: insertManyOptions) {
         if (!Array.isArray(data)) throw new Error("[ODM] insertMany data must be an array");
         const execute = new Executor(this.client, this.table, this.schema, opt?.useTransaction ? await this.client.getConnection() : undefined)
@@ -65,6 +66,16 @@ class Model<T> {
     async update(query: Query<T>, data: Partial<T>,) {
         const execute = new Executor(this.client, this.table, this.schema)
         return execute.update(query, data);
+    }
+
+    async aggregate<P>(options: AggregationOptions<T>) {
+        const execute = new Executor(this.client, this.table, this.schema)
+        return execute.aggregate(options);
+    }
+
+    execute(sql: string, params: any[]) {
+        const execute = new Executor(this.client, this.table, this.schema)
+        return execute.execute(sql, params);
     }
 
     /**

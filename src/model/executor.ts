@@ -74,7 +74,7 @@ class Executor {
         }
     }
 
-    private execute(joinSql: string, params: any[]) {
+    execute(joinSql: string, params: any[]) {
         if (this.conn) {
             return this.client.withConnExecute(this.conn, joinSql, params);
         }
@@ -261,7 +261,7 @@ class Executor {
     }
 
 
-    async update<T>(query: Query<T>, data: Partial<T>, opt: UpdateOptions = {}) {
+    async update<T>(query: Query<T>, data: Partial<T>) {
         if (typeof this.schema.hooks.beforeUpdate === "function") {
             const reslut = await this.schema.hooks.beforeUpdate(query, data) || [query, data]
             query = reslut[0]
@@ -282,7 +282,7 @@ class Executor {
     }
 
 
-    async updateMany<T>(query: Query<T>, data: Partial<T>, opt: UpdateOptions = {}) {
+    async updateMany<T>(query: Query<T>, data: Partial<T>) {
         if (typeof this.schema.hooks.beforeUpdate === "function") {
             const reslut = await this.schema.hooks.beforeUpdate(query, data) || [query, data]
             query = reslut[0]
@@ -293,7 +293,7 @@ class Executor {
         const finalSql = `
             UPDATE ${quote(this.table)}
             SET ${assignments} 
-            WHERE ${whereSql} 
+            WHERE ${whereSql}
         `;
 
         const reslut = await this.execute(finalSql, [...values, ...whereParams]);
@@ -329,7 +329,7 @@ class Executor {
         return result as ResultSetHeader;
     }
 
-    async Aggregate<T, P>(options: AggregationOptions<T>): Promise<P[]> {
+    async aggregate<T, P>(options: AggregationOptions<T>): Promise<P[]> {
         if (typeof this.schema.hooks.beforeAggregate === "function") {
             options = await this.schema.hooks.beforeAggregate(options) || options;
         }

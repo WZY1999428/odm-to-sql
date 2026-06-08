@@ -33,6 +33,7 @@ export type AggregateOption<T> = {
 export type OneOrMany<T> = T | T[];
 
 // 关键点：OneOrMany 让它可以是对象，也可以是对象数组
+
 export type AggregateFields<T> = {
     [key in AggregateOps]?: OneOrMany<AggregateOption<T> | keyof T>;
 } & {
