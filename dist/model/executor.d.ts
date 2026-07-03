@@ -1,5 +1,5 @@
 import type { Query, AggregationOptions } from "../parse/operators";
-import type { FindOptions, FindOneOptions, InsertOptions, UpdateOptions, insertManyOptions } from "./options";
+import type { FindOptions, FindOneOptions, InsertOptions, insertManyOptions } from "./options";
 import { newConnection } from "../client";
 import { Schema } from "../schema";
 import Client from "../client";
@@ -9,7 +9,7 @@ declare class Executor {
     private table;
     private schema;
     private conn?;
-    constructor(client: Client, table: string, schema: Schema<any>, conn?: newConnection);
+    constructor(client: Client, table: string, schema: Schema<any>, conn?: newConnection | undefined);
     private buildFields;
     private buildLimit;
     /** 开启事务 */
@@ -19,19 +19,19 @@ declare class Executor {
     /** 回滚事务 */
     rollback(): Promise<void>;
     release(): Promise<void>;
-    private execute;
+    execute(joinSql: string, params: any[]): Promise<import("mysql2").QueryResult>;
     find<T>(query: Query<T>, options?: FindOptions<T>): Promise<any>;
     findOne<T>(query: Query<T>, options?: FindOneOptions<T>): Promise<any>;
     count<T>(query?: Query<T>): Promise<number>;
     findMany<T>(query: Query<T>, options?: FindOneOptions<T>): Promise<any>;
     private prepareFields;
-    insert<T>(data: T, opt?: InsertOptions): Promise<any>;
+    insert<T>(data: T, opt?: InsertOptions): Promise<import("mysql2").QueryResult>;
     insertMany<T>(data: T[], opt?: insertManyOptions): Promise<ResultSetHeader>;
-    update<T>(query: Query<T>, data: Partial<T>, opt?: UpdateOptions): Promise<any>;
-    updateMany<T>(query: Query<T>, data: Partial<T>, opt?: UpdateOptions): Promise<any>;
+    update<T>(query: Query<T>, data: Partial<T>): Promise<void | ResultSetHeader>;
+    updateMany<T>(query: Query<T>, data: Partial<T>): Promise<void | ResultSetHeader>;
     deleteOne<T>(query: Query<T>): Promise<ResultSetHeader>;
     deleteMany<T>(query: Query<T>): Promise<ResultSetHeader>;
-    Aggregate<T, P>(options: AggregationOptions<T>): Promise<P[]>;
+    aggregate<T, P>(options: AggregationOptions<T>): Promise<P[]>;
 }
 export default Executor;
 //# sourceMappingURL=executor.d.ts.map

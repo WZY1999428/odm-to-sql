@@ -2,7 +2,7 @@ import Cleint from "../client";
 import Executor from "./executor";
 import { Schema } from "../schema";
 import type { Query } from "../parse/operators/index";
-import type { FindOptions, FindOneOptions, InsertOptions, insertManyOptions } from "./options";
+import type { FindOptions, FindOneOptions, InsertOptions, insertManyOptions, AggregationOptions } from "./options";
 declare class Model<T> {
     table: string;
     schema: Schema<T>;
@@ -13,10 +13,12 @@ declare class Model<T> {
     find(query?: Query<T>, options?: FindOptions<T>): Promise<any>;
     findOne(query?: Query<T>, options?: FindOneOptions<T>): Promise<any>;
     count(query?: Query<T>): Promise<number>;
-    deleteOne(query?: Query<T>): Promise<ResultSetHeader>;
-    insert(data: T, opt?: InsertOptions): Promise<any>;
-    insertMany(data: T[], opt?: insertManyOptions): Promise<ResultSetHeader>;
-    update(query: Query<T>, data: Partial<T>): Promise<any>;
+    deleteOne(query?: Query<T>): Promise<import("mysql2").ResultSetHeader>;
+    insert(data: T, opt?: InsertOptions): Promise<import("mysql2").QueryResult>;
+    insertMany(data: T[], opt?: insertManyOptions): Promise<import("mysql2").ResultSetHeader>;
+    update(query: Query<T>, data: Partial<T>): Promise<void | import("mysql2").ResultSetHeader>;
+    aggregate<P>(options: AggregationOptions<T>): Promise<unknown[]>;
+    execute(sql: string, params: any[]): Promise<import("mysql2").QueryResult>;
     /**
     *推荐当前使用连接池时使用
     * 从连接池借出一个绑定的执行器。

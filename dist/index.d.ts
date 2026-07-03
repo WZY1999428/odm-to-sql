@@ -10,5 +10,5 @@ declare class MySqlODM {
     model<T>(table: string, schema?: Schema<T>): Model<T>;
     getModels(): MapIterator<string>;
 }
-export default MySqlODM;
+export = MySqlODM;
 //# sourceMappingURL=index.d.ts.map

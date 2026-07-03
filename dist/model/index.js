@@ -61,6 +61,14 @@ class Model {
         const execute = new executor_1.default(this.client, this.table, this.schema);
         return execute.update(query, data);
     }
+    async aggregate(options) {
+        const execute = new executor_1.default(this.client, this.table, this.schema);
+        return execute.aggregate(options);
+    }
+    execute(sql, params) {
+        const execute = new executor_1.default(this.client, this.table, this.schema);
+        return execute.execute(sql, params);
+    }
     /**
     *推荐当前使用连接池时使用
     * 从连接池借出一个绑定的执行器。

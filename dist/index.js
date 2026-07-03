@@ -2,7 +2,6 @@
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = __importDefault(require("./client"));
 const schema_1 = require("./schema");
 const model_1 = __importDefault(require("./model"));
@@ -35,5 +34,5 @@ class MySqlODM {
         return this.models.keys();
     }
 }
-exports.default = MySqlODM;
+module.exports = MySqlODM;
 //# sourceMappingURL=index.js.map

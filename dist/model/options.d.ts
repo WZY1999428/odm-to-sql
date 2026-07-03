@@ -1,4 +1,5 @@
 import type { OrderBy } from "../parse/parseOrder";
+export type { AggregationOptions } from "../parse/operators";
 export type FindOneOptions<T> = {
     fields?: string[];
     sort?: OrderBy<T>;
@@ -20,7 +21,6 @@ export type insertManyOptions = {
     batchSize?: number;
 } & InsertOptions;
 export type UpdateOptions = {
-    /** 如果存在冲突，则更新这些字段。如果是 true，则更新所有传入字段。 */
-    upsert?: boolean | string[];
+    upsert?: boolean;
 };
 //# sourceMappingURL=options.d.ts.map

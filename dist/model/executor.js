@@ -245,7 +245,7 @@ class Executor {
         }
         return results;
     }
-    async update(query, data, opt = {}) {
+    async update(query, data) {
         if (typeof this.schema.hooks.beforeUpdate === "function") {
             const reslut = await this.schema.hooks.beforeUpdate(query, data) || [query, data];
             query = reslut[0];
@@ -264,7 +264,7 @@ class Executor {
         }
         return reslut;
     }
-    async updateMany(query, data, opt = {}) {
+    async updateMany(query, data) {
         if (typeof this.schema.hooks.beforeUpdate === "function") {
             const reslut = await this.schema.hooks.beforeUpdate(query, data) || [query, data];
             query = reslut[0];
@@ -275,7 +275,7 @@ class Executor {
         const finalSql = `
             UPDATE ${(0, utils_1.quote)(this.table)}
             SET ${assignments} 
-            WHERE ${whereSql} 
+            WHERE ${whereSql}
         `;
         const reslut = await this.execute(finalSql, [...values, ...whereParams]);
         if (typeof this.schema.hooks.afterUpdate === "function") {
@@ -307,7 +307,7 @@ class Executor {
         }
         return result;
     }
-    async Aggregate(options) {
+    async aggregate(options) {
         if (typeof this.schema.hooks.beforeAggregate === "function") {
             options = await this.schema.hooks.beforeAggregate(options) || options;
         }

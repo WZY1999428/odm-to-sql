@@ -37,4 +37,4 @@ class MySqlODM {
     }
 }
 
-export default MySqlODM;
+export = MySqlODM;
