@@ -20,7 +20,7 @@ class MySqlODM {
             : await Client.connectionPool(options);
     }
 
-    model<T>(table: string, schema?: Schema<T>) {
+    async model<T>(table: string, schema?: Schema<T>) {
         if (!this.conn) throw new Error("Database not connected");
         if (this.models.has(table)) return this.models.get(table) as Model<T>;
         if (!(schema instanceof Schema)) {
@@ -28,8 +28,50 @@ class MySqlODM {
         }
         schema.table = table;
         const model = new Model<T>(table, schema, this.conn!);
+        const fields = await model.execute("SHOW COLUMNS FROM users ", []);
+        const notFields = [];
+        for (const key in schema.fields) {
+            if (!(fields as any[]).some((item: any) => item.Field === key)) {
+                notFields.push(key);
+            }
+        }
+        if (notFields.length > 0) {
+            // TODO: 创建缺失的字段
+            for (const fieldName of notFields) {
+                const uniqueGroupMap = new Map();
+                const config = schema.fields[fieldName];
+                const { definition, alterTable } = schema.parseFields(fieldName, config, uniqueGroupMap);
+                const sql = `ALTER TABLE \`${table}\` ADD COLUMN ${definition};`;
+                await model.execute(sql, []);
+                if (alterTable) {
+                    await model.execute(alterTable, []);
+                }
+            }
+            console.warn(`已自动添加新增字段: ${notFields.join(', ')}`);
+        }
+
+
+
         this.models.set(table, model);
         return this.models.get(table) as Model<T>;
+    }
+
+    private buildColumnSQL(name: string, field: any) {
+        let sql = `\`${name}\` ${field.type}`;
+
+        if (field.length) {
+            sql += `(${field.length})`;
+        }
+
+        if (field.nullable) {
+            sql += ` NOT NULL`;
+        }
+
+        if (field.autoIncrement) {
+            sql += ` AUTO_INCREMENT`;
+        }
+
+        return sql;
     }
 
     getModels() {

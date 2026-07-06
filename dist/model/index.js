@@ -20,11 +20,14 @@ class Model {
         const definition = this.schema.toTableDefinition();
         const sql = `
         CREATE TABLE IF NOT EXISTS \`${this.table}\` (
-            ${definition}
+            ${definition.definition}
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `;
         try {
             await this.client.execute(sql);
+            if (definition.alterTable) {
+                await this.client.execute(definition.alterTable);
+            }
         }
         catch (err) {
             console.error(`[ODM] Failed to create table "${this.table}":`, err);

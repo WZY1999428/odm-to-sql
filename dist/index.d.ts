@@ -7,7 +7,8 @@ declare class MySqlODM {
     conn: Client | null;
     constructor();
     use(options: ConnectionOptions, type?: 'connection' | 'pool'): Promise<void>;
-    model<T>(table: string, schema?: Schema<T>): Model<T>;
+    model<T>(table: string, schema?: Schema<T>): Promise<Model<T>>;
+    private buildColumnSQL;
     getModels(): MapIterator<string>;
 }
 export = MySqlODM;

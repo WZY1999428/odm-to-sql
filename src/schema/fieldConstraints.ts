@@ -1,9 +1,15 @@
 
 import { DataType } from "."
+
+type AutoIncrement = {
+    enabled: true,
+    start: number
+}
+
 export type FieldConstraints = {
     required?: boolean | undefined,
     primaryKey?: boolean | undefined,
-    autoIncrement?: boolean | undefined,
+    autoIncrement?: boolean | AutoIncrement | undefined,
     nullable?: boolean | undefined,
     index?: boolean | undefined,
     unique?: boolean | undefined,

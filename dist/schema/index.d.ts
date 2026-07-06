@@ -68,10 +68,17 @@ type SchemaHooks<T, P = any> = {
 export declare class Schema<T> {
     fields: FieldsMap<T>;
     fieldsMap: Map<string, DataType>;
-    table?: string;
     hooks: SchemaHooks<T>;
+    table?: string;
     constructor(fields: FieldsMap<T>, hooks?: SchemaHooks<T>);
-    toTableDefinition(): string;
+    toTableDefinition(): {
+        definition: string;
+        alterTable?: string | undefined;
+    };
+    parseFields<T>(name: string, config: FieldSchema, uniqueGroupMap: Map<string, string[]>): {
+        definition: string;
+        alterTable?: string | undefined;
+    };
 }
 export {};
 //# sourceMappingURL=index.d.ts.map

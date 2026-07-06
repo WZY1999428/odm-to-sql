@@ -1,8 +1,12 @@
 import { DataType } from ".";
+type AutoIncrement = {
+    enabled: true;
+    start: number;
+};
 export type FieldConstraints = {
     required?: boolean | undefined;
     primaryKey?: boolean | undefined;
-    autoIncrement?: boolean | undefined;
+    autoIncrement?: boolean | AutoIncrement | undefined;
     nullable?: boolean | undefined;
     index?: boolean | undefined;
     unique?: boolean | undefined;
@@ -27,4 +31,5 @@ export type OtherSchema = FieldConstraints & {
 export type FieldSchema = NumericSchema | StringSchema | DateTimeSchema | OtherSchema;
 export type SpecializedTypes = DataType.Char | DataType.VarChar | DataType.DateTime | DataType.Time | DataType.Timestamp | DataType.Decimal | DataType.Float | DataType.Double;
 export type DefineTpe = Exclude<DataType, SpecializedTypes>;
+export {};
 //# sourceMappingURL=fieldConstraints.d.ts.map

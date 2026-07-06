@@ -20,12 +20,14 @@ class Model<T> {
         const definition = this.schema.toTableDefinition();
         const sql = `
         CREATE TABLE IF NOT EXISTS \`${this.table}\` (
-            ${definition}
+            ${definition.definition}
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `;
-
         try {
             await this.client.execute(sql);
+            if (definition.alterTable) {
+                await this.client.execute(definition.alterTable);
+            }
         } catch (err) {
             console.error(`[ODM] Failed to create table "${this.table}":`, err);
             throw err;
@@ -55,7 +57,7 @@ class Model<T> {
         const execute = new Executor(this.client, this.table, this.schema)
         return execute.insert(data, opt);
     }
-    
+
     async insertMany(data: T[], opt?: insertManyOptions) {
         if (!Array.isArray(data)) throw new Error("[ODM] insertMany data must be an array");
         const execute = new Executor(this.client, this.table, this.schema, opt?.useTransaction ? await this.client.getConnection() : undefined)

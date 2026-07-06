@@ -6,6 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "watch:build": "tsc --watch",
     "test": "ts-node test.ts",
     "bench": "ts-node benchmark.ts"
   },

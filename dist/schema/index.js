@@ -184,8 +184,8 @@ function sanitizeConstraints(opt = {}) {
 class Schema {
     fields;
     fieldsMap;
-    table;
     hooks;
+    table;
     constructor(fields, hooks) {
         this.fields = fields;
         this.fieldsMap = new Map();
@@ -201,51 +201,70 @@ class Schema {
         }
         const definitionArr = [];
         const uniqueGroupMap = new Map();
+        let alterTable;
         for (const name in this.fields) {
-            let definition = "";
             const config = this.fields[name];
-            if (!config || !config.type || !allDataTypes.has(config.type)) {
-                throw new Error(`${name} value is undefined`);
-            }
-            const fieldName = (0, utils_1.quote)(name);
-            const fieldType = config.type;
-            definition += `${fieldName} ${config.type}`;
-            if (fieldType === DataType.Char || fieldType === DataType.VarChar) {
-                if (config.length)
-                    definition += `(${config.length}) `;
-            }
-            else if (fieldType === DataType.Decimal || fieldType === DataType.Float || fieldType === DataType.Double) {
-                if (config.m && config.d)
-                    definition += `(${config.m}, ${config.d}) `;
-            }
-            else if (fieldType === DataType.DateTime || fieldType === DataType.Time || fieldType === DataType.Timestamp) {
-                if (config.fps)
-                    definition += `(${config.fps}) `;
-            }
-            if (config.primaryKey === true)
-                definition += ' PRIMARY KEY';
-            if (config.autoIncrement === true)
-                definition += ' AUTO_INCREMENT';
-            if (config.nullable === false)
-                definition += ' NOT NULL';
-            if (config.unique === true)
-                definition += ' UNIQUE';
-            if (config.uniqueGroup && config.uniqueGroup.length > 0) {
-                if (!Array.isArray(config.uniqueGroup) || config.uniqueGroup.some(item => typeof item !== 'string')) {
-                    throw new Error("uniqueGroup must be a string array");
-                }
-                config.uniqueGroup.forEach(groupName => {
-                    const existing = uniqueGroupMap.get(groupName) || [];
-                    existing.push(fieldName);
-                    uniqueGroupMap.set(groupName, existing);
-                });
-            }
+            const { definition, alterTable: alterTableFromField } = this.parseFields(name, config, uniqueGroupMap);
             definitionArr.push(definition);
+            if (alterTableFromField) {
+                alterTable = alterTableFromField;
+            }
         }
         for (const [groupName, columns] of uniqueGroupMap.entries()) {
             definitionArr.push(`UNIQUE KEY \`uk_${groupName}\` (${columns.join(", ")})`);
         }
-        return definitionArr.join(", ");
+        return {
+            definition: definitionArr.join(", "),
+            alterTable: alterTable
+        };
+    }
+    parseFields(name, config, uniqueGroupMap) {
+        let definition = "";
+        let alterTable;
+        if (!config || !config.type || !allDataTypes.has(config.type)) {
+            throw new Error(`${name} value is undefined`);
+        }
+        const fieldName = (0, utils_1.quote)(name);
+        const fieldType = config.type;
+        definition += `${fieldName} ${config.type}`;
+        if (fieldType === DataType.Char || fieldType === DataType.VarChar) {
+            if (config.length)
+                definition += `(${config.length}) `;
+        }
+        else if (fieldType === DataType.Decimal || fieldType === DataType.Float || fieldType === DataType.Double) {
+            if (config.m && config.d)
+                definition += `(${config.m}, ${config.d}) `;
+        }
+        else if (fieldType === DataType.DateTime || fieldType === DataType.Time || fieldType === DataType.Timestamp) {
+            if (config.fps)
+                definition += `(${config.fps}) `;
+        }
+        if (config.primaryKey === true)
+            definition += ' PRIMARY KEY';
+        if (config.autoIncrement === true)
+            definition += ' AUTO_INCREMENT';
+        else if (typeof config.autoIncrement === 'object' && config.autoIncrement?.enabled === true) {
+            definition += ' AUTO_INCREMENT';
+            alterTable = `ALTER TABLE \`${this.table}\` AUTO_INCREMENT = ${config.autoIncrement.start};`;
+        }
+        if (config.nullable === false)
+            definition += ' NOT NULL';
+        if (config.unique === true)
+            definition += ' UNIQUE';
+        if (config.uniqueGroup && config.uniqueGroup.length > 0) {
+            if (!Array.isArray(config.uniqueGroup) || config.uniqueGroup.some(item => typeof item !== 'string')) {
+                throw new Error("uniqueGroup must be a string array");
+            }
+            config.uniqueGroup.forEach(groupName => {
+                const existing = uniqueGroupMap.get(groupName) || [];
+                existing.push(fieldName);
+                uniqueGroupMap.set(groupName, existing);
+            });
+        }
+        return {
+            definition,
+            alterTable
+        };
     }
 }
 exports.Schema = Schema;
