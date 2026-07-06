@@ -244,7 +244,7 @@ function sanitizeConstraints(opt: FieldConstraints = {}): FieldConstraints {
     const {
         autoIncrement,
         nullable,
-        primary,
+        primaryKey,
         unique,
         required,
         uniqueGroup,
@@ -252,7 +252,7 @@ function sanitizeConstraints(opt: FieldConstraints = {}): FieldConstraints {
     } = opt;
     // 重新组合，只保留非 null/undefined 的属性
     return Object.fromEntries(Object.entries({
-        autoIncrement, nullable, primary, unique, required, uniqueGroup, index
+        autoIncrement, nullable, primaryKey, unique, required, uniqueGroup, index
     }).filter(([_, v]) => v !== undefined && v !== null)
     ) as FieldConstraints;
 }
@@ -327,7 +327,7 @@ export class Schema<T> {
                 if (config.fps) definition += `(${config.fps}) `
             }
 
-            if (config.primary === true) definition += ' PRIMARY KEY';
+            if (config.primaryKey === true) definition += ' PRIMARY KEY';
             if (config.autoIncrement === true) definition += ' AUTO_INCREMENT';
             if (config.nullable === false) definition += ' NOT NULL';
             if (config.unique === true) definition += ' UNIQUE';

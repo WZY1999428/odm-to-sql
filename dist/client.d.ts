@@ -9,6 +9,7 @@ declare class Client {
     private dbPoll;
     isPool: boolean;
     private release;
+    private database;
     private constructor();
     private static createDataBase;
     static connection(options: ConnectionOptions): Promise<Client>;

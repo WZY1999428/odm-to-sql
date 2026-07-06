@@ -9,6 +9,7 @@ class Client {
     dbPoll = null;
     isPool = false;
     release = false;
+    database = '';
     constructor(conn = null) {
         this.conn = conn;
     }
@@ -25,22 +26,27 @@ class Client {
         return new Client(conn);
     }
     static async connectionPool(options) {
-        const { database, ...connectionConfig } = options;
-        const pool = promise_1.default.createPool(connectionConfig);
+        // const { database, ...connectionConfig } = options;
+        const database = options.database;
+        const pool = promise_1.default.createPool(options);
         if (database) {
             const conn = await pool.getConnection();
-            await this.createDataBase(database, conn);
+            await conn.query(`CREATE DATABASE IF NOT EXISTS \`${database}\` CHARACTER SET utf8mb4;`);
             conn.release();
         }
         const instance = new Client();
         instance.isPool = true;
         instance.dbPoll = pool;
         instance.release = options.release || true;
+        instance.database = database || '';
         return instance;
     }
     async getConnection() {
-        if (this.isPool)
-            return await this.dbPoll.getConnection();
+        if (this.isPool) {
+            const conn = await this.dbPoll.getConnection();
+            return conn;
+        }
+        ;
         return this.conn;
     }
     async end() {

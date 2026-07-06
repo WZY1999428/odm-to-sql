@@ -11,6 +11,7 @@ class Client {
     private dbPoll: Pool | null = null;
     isPool: boolean = false
     private release: boolean = false
+    private database: string = ''
     private constructor(conn: Connection | null = null) {
         this.conn = conn;
     }
@@ -31,22 +32,27 @@ class Client {
     }
 
     public static async connectionPool(options: Options): Promise<Client> {
-        const { database, ...connectionConfig } = options;
-        const pool = mysql.createPool(connectionConfig);
+        // const { database, ...connectionConfig } = options;
+        const database = options.database;
+        const pool = mysql.createPool(options);
         if (database) {
             const conn = await pool.getConnection();
-            await this.createDataBase(database, conn);
+            await (conn as any).query(`CREATE DATABASE IF NOT EXISTS \`${database}\` CHARACTER SET utf8mb4;`);
             conn.release();
         }
         const instance = new Client();
         instance.isPool = true
         instance.dbPoll = pool
         instance.release = options.release || true;
+        instance.database = database || '';
         return instance!
     }
 
     public async getConnection(): Promise<newConnection> {
-        if (this.isPool) return await this.dbPoll!.getConnection();
+        if (this.isPool) {
+            const conn = await this.dbPoll!.getConnection()
+            return conn
+        };
         return this.conn!;
     }
 

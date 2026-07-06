@@ -2,7 +2,7 @@
 import { DataType } from "."
 export type FieldConstraints = {
     required?: boolean | undefined,
-    primary?: boolean | undefined,
+    primaryKey?: boolean | undefined,
     autoIncrement?: boolean | undefined,
     nullable?: boolean | undefined,
     index?: boolean | undefined,

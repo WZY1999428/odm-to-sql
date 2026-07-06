@@ -175,10 +175,10 @@ function resolveNumberParams(mOrOpt, dOrOpt, opt) {
 }
 // 过滤掉 null/undefined和非法字段
 function sanitizeConstraints(opt = {}) {
-    const { autoIncrement, nullable, primary, unique, required, uniqueGroup, index } = opt;
+    const { autoIncrement, nullable, primaryKey, unique, required, uniqueGroup, index } = opt;
     // 重新组合，只保留非 null/undefined 的属性
     return Object.fromEntries(Object.entries({
-        autoIncrement, nullable, primary, unique, required, uniqueGroup, index
+        autoIncrement, nullable, primaryKey, unique, required, uniqueGroup, index
     }).filter(([_, v]) => v !== undefined && v !== null));
 }
 class Schema {
@@ -222,7 +222,7 @@ class Schema {
                 if (config.fps)
                     definition += `(${config.fps}) `;
             }
-            if (config.primary === true)
+            if (config.primaryKey === true)
                 definition += ' PRIMARY KEY';
             if (config.autoIncrement === true)
                 definition += ' AUTO_INCREMENT';
