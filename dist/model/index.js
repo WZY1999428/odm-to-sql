@@ -50,6 +50,10 @@ class Model {
         const execute = new executor_1.default(this.client, this.table, this.schema);
         return execute.deleteOne(query || {});
     }
+    deleteMany(query) {
+        const execute = new executor_1.default(this.client, this.table, this.schema);
+        return execute.deleteMany(query || {});
+    }
     async insert(data, opt) {
         const execute = new executor_1.default(this.client, this.table, this.schema);
         return execute.insert(data, opt);

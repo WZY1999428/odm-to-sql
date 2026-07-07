@@ -14,6 +14,7 @@ declare class Model<T> {
     findOne(query?: Query<T>, options?: FindOneOptions<T>): Promise<any>;
     count(query?: Query<T>): Promise<number>;
     deleteOne(query?: Query<T>): Promise<import("mysql2").ResultSetHeader>;
+    deleteMany(query?: Query<T>): Promise<import("mysql2").ResultSetHeader>;
     insert(data: T, opt?: InsertOptions): Promise<import("mysql2").QueryResult>;
     insertMany(data: T[], opt?: insertManyOptions): Promise<import("mysql2").ResultSetHeader>;
     update(query: Query<T>, data: Partial<T>): Promise<void | import("mysql2").ResultSetHeader>;

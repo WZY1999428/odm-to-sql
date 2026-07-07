@@ -53,6 +53,12 @@ class Model<T> {
         return execute.deleteOne(query || {});
     }
 
+    
+    deleteMany(query?: Query<T>) {
+        const execute = new Executor(this.client, this.table, this.schema)
+        return execute.deleteMany(query || {});
+    }
+
     async insert(data: T, opt?: InsertOptions) {
         const execute = new Executor(this.client, this.table, this.schema)
         return execute.insert(data, opt);

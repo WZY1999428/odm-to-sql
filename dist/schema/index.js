@@ -204,6 +204,9 @@ class Schema {
         let alterTable;
         for (const name in this.fields) {
             const config = this.fields[name];
+            if (config.type && typeof config.type === 'string') {
+                config.type = config.type.toUpperCase();
+            }
             const { definition, alterTable: alterTableFromField } = this.parseFields(name, config, uniqueGroupMap);
             definitionArr.push(definition);
             if (alterTableFromField) {

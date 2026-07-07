@@ -1,5 +1,5 @@
 const MySqlODM = require('./dist/index.js');
-const { Schema, FieldSchemaBuilder } = require('./dist/schema');
+const { Schema, FieldSchemaBuilder, DataType } = require('./dist/schema');
 (async () => {
     const odm = new MySqlODM();
     await odm.use({
@@ -9,23 +9,16 @@ const { Schema, FieldSchemaBuilder } = require('./dist/schema');
         database: "koa-serve"
     });
     const userSchema = new Schema({
-        id: { type: 'INT', primaryKey: true, autoIncrement: { enabled: true, start: 2000 } },
-        name: { type: 'VARCHAR', length: 255, nullable: false },
-        age: { type: 'INT', default: 0 },
+        id: { type: 'int', primaryKey: true, autoIncrement: { enabled: true, start: 2000 } },
+        name: { type: 'varchar', length: 255, nullable: false },
+        age: { type: DataType.Int, default: 0 },
         gender: FieldSchemaBuilder.VarChar(),
         email: FieldSchemaBuilder.VarChar(),
         phone: FieldSchemaBuilder.VarChar()
 
     });
-    const userModel =await odm.model('users', userSchema);
-
-    await userModel.insert({
-        name: "123123123",
-        age: 20,
-        gender: "123123",
-        phone: "123123123"
-    })
-
+    const userModel = await odm.model('users', userSchema);
+    await userModel.update({ id: 2008 }, { age: 60 })
     const result = await userModel.find({})
     console.log(result)
 })() 

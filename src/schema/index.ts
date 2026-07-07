@@ -309,8 +309,15 @@ export class Schema<T> {
         let alterTable;
         for (const name in this.fields) {
             const config = this.fields[name];
+
+            if (config.type && typeof config.type === 'string') {
+                config.type = config.type.toUpperCase() as DataType;
+            }
+
             const { definition, alterTable: alterTableFromField } = this.parseFields<T>(name, config, uniqueGroupMap);
+
             definitionArr.push(definition);
+
             if (alterTableFromField) {
                 alterTable = alterTableFromField;
             }
