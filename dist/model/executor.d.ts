@@ -27,10 +27,11 @@ declare class Executor {
     private prepareFields;
     insert<T>(data: T, opt?: InsertOptions): Promise<import("mysql2").QueryResult>;
     insertMany<T>(data: T[], opt?: insertManyOptions): Promise<ResultSetHeader>;
-    update<T>(query: Query<T>, data: Partial<T>): Promise<void | ResultSetHeader>;
-    updateMany<T>(query: Query<T>, data: Partial<T>): Promise<void | ResultSetHeader>;
+    update<T>(query: Query<T>, data: Partial<T>): Promise<ResultSetHeader>;
+    updateMany<T>(query: Query<T>, data: Partial<T>): Promise<any>;
     deleteOne<T>(query: Query<T>): Promise<ResultSetHeader>;
     deleteMany<T>(query: Query<T>): Promise<ResultSetHeader>;
+    clear(): Promise<ResultSetHeader>;
     aggregate<T, P>(options: AggregationOptions<T>): Promise<P[]>;
 }
 export default Executor;

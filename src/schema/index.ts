@@ -248,11 +248,12 @@ function sanitizeConstraints(opt: FieldConstraints = {}): FieldConstraints {
         unique,
         required,
         uniqueGroup,
+        default: defaultValue,
         index
     } = opt;
     // 重新组合，只保留非 null/undefined 的属性
     return Object.fromEntries(Object.entries({
-        autoIncrement, nullable, primaryKey, unique, required, uniqueGroup, index
+        autoIncrement, nullable, primaryKey, unique, required, uniqueGroup, default: defaultValue, index
     }).filter(([_, v]) => v !== undefined && v !== null)
     ) as FieldConstraints;
 }
@@ -269,7 +270,7 @@ type SchemaHooks<T, P = any> = {
     // 更新前执行
     beforeUpdate?: (query: Query<T>, data: Partial<T>) => Promise<[Query<T>, Partial<T>]>;
     // 更新后执行
-    afterUpdate?: (data: T) => Promise<void>;
+    afterUpdate?: (data: T) => Promise<ResultSetHeader | any | void>;
     // 删除前
     beforeDelete?: (query: Query<T>) => Promise<Query<T>>;
     // 删除后
@@ -314,7 +315,7 @@ export class Schema<T> {
                 config.type = config.type.toUpperCase() as DataType;
             }
 
-            const { definition, alterTable: alterTableFromField } = this.parseFields<T>(name, config, uniqueGroupMap);
+            const { definition, alterTable: alterTableFromField } = this.parseFields(name, config, uniqueGroupMap);
 
             definitionArr.push(definition);
 
@@ -333,7 +334,7 @@ export class Schema<T> {
         };
     }
 
-    parseFields<T>(name: string, config: FieldSchema, uniqueGroupMap: Map<string, string[]>): { definition: string, alterTable?: string | undefined } {
+    parseFields(name: string, config: FieldSchema, uniqueGroupMap: Map<string, string[]>): { definition: string, alterTable?: string | undefined } {
         let definition = "";
         let alterTable
         if (!config || !config.type || !allDataTypes.has(config.type)) {
@@ -352,6 +353,7 @@ export class Schema<T> {
 
         if (config.primaryKey === true) definition += ' PRIMARY KEY';
         if (config.autoIncrement === true) definition += ' AUTO_INCREMENT';
+        if (config.default !== undefined) definition += ` DEFAULT ${config.default}`;
         else if (typeof config.autoIncrement === 'object' && config.autoIncrement?.enabled === true) {
             definition += ' AUTO_INCREMENT';
             alterTable = `ALTER TABLE \`${this.table}\` AUTO_INCREMENT = ${config.autoIncrement.start};`;

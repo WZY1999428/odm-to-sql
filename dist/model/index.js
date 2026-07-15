@@ -34,15 +34,15 @@ class Model {
             throw err;
         }
     }
-    async find(query, options = {}) {
+    find(query, options = {}) {
         const execute = new executor_1.default(this.client, this.table, this.schema);
         return execute.find(query || {}, options);
     }
-    async findOne(query, options = {}) {
+    findOne(query, options = {}) {
         const execute = new executor_1.default(this.client, this.table, this.schema);
         return execute.findOne(query || {}, options);
     }
-    async count(query) {
+    count(query) {
         const execute = new executor_1.default(this.client, this.table, this.schema);
         return execute.count(query);
     }
@@ -54,7 +54,7 @@ class Model {
         const execute = new executor_1.default(this.client, this.table, this.schema);
         return execute.deleteMany(query || {});
     }
-    async insert(data, opt) {
+    insert(data, opt) {
         const execute = new executor_1.default(this.client, this.table, this.schema);
         return execute.insert(data, opt);
     }
@@ -64,13 +64,17 @@ class Model {
         const execute = new executor_1.default(this.client, this.table, this.schema, opt?.useTransaction ? await this.client.getConnection() : undefined);
         return execute.insertMany(data, opt);
     }
-    async update(query, data) {
+    update(query, data) {
         const execute = new executor_1.default(this.client, this.table, this.schema);
         return execute.update(query, data);
     }
-    async aggregate(options) {
+    aggregate(options) {
         const execute = new executor_1.default(this.client, this.table, this.schema);
         return execute.aggregate(options);
+    }
+    clear() {
+        const execute = new executor_1.default(this.client, this.table, this.schema);
+        return execute.clear();
     }
     execute(sql, params) {
         const execute = new executor_1.default(this.client, this.table, this.schema);

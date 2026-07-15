@@ -10,6 +10,7 @@ export type FieldConstraints = {
     required?: boolean | undefined,
     primaryKey?: boolean | undefined,
     autoIncrement?: boolean | AutoIncrement | undefined,
+    default?: any | undefined,
     nullable?: boolean | undefined,
     index?: boolean | undefined,
     unique?: boolean | undefined,

@@ -8,6 +8,7 @@ const { Schema, FieldSchemaBuilder, DataType } = require('./dist/schema');
         password: "123456789",
         database: "koa-serve"
     });
+
     const userSchema = new Schema({
         id: { type: 'int', primaryKey: true, autoIncrement: { enabled: true, start: 2000 } },
         name: { type: 'varchar', length: 255, nullable: false },
@@ -17,8 +18,11 @@ const { Schema, FieldSchemaBuilder, DataType } = require('./dist/schema');
         phone: FieldSchemaBuilder.VarChar()
 
     });
+    
     const userModel = await odm.model('users', userSchema);
-    await userModel.update({ id: 2008 }, { age: 60 })
-    const result = await userModel.find({})
-    console.log(result)
+    const ret = await userModel.clear()
+    console.log('Clear result:', ret);
+    await userModel.insert({ name: 'John Doe', gender: 'male', email: 'john.doe@example.com' })
+    console.log('User inserted successfully');
+    console.log(await userModel.find({}))
 })() 

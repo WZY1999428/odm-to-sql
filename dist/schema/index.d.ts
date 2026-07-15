@@ -57,7 +57,7 @@ type SchemaHooks<T, P = any> = {
     beforeInsert?: (data: T) => Promise<T | void>;
     afterInsert?: (data: T) => Promise<ResultSetHeader>;
     beforeUpdate?: (query: Query<T>, data: Partial<T>) => Promise<[Query<T>, Partial<T>]>;
-    afterUpdate?: (data: T) => Promise<void>;
+    afterUpdate?: (data: T) => Promise<ResultSetHeader | any | void>;
     beforeDelete?: (query: Query<T>) => Promise<Query<T>>;
     afterDelete?: (data: T) => Promise<ResultSetHeader>;
     beforeFind?: (query: Query<T>) => Promise<Query<T>>;
@@ -75,7 +75,7 @@ export declare class Schema<T> {
         definition: string;
         alterTable?: string | undefined;
     };
-    parseFields<T>(name: string, config: FieldSchema, uniqueGroupMap: Map<string, string[]>): {
+    parseFields(name: string, config: FieldSchema, uniqueGroupMap: Map<string, string[]>): {
         definition: string;
         alterTable?: string | undefined;
     };

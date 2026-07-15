@@ -171,11 +171,11 @@ class Executor {
                 .join(', ');
             sql += ` ON DUPLICATE KEY UPDATE ${updateSql}`;
         }
-        const reslut = await this.execute(sql, params);
+        const result = await this.execute(sql, params);
         if (typeof this.schema.hooks.afterInsert === "function") {
-            return await this.schema.hooks.afterInsert(reslut);
+            return await this.schema.hooks.afterInsert(result);
         }
-        return reslut;
+        return result;
     }
     async insertMany(data, opt = {}) {
         if (!Array.isArray(data) || data.length === 0)
@@ -247,9 +247,9 @@ class Executor {
     }
     async update(query, data) {
         if (typeof this.schema.hooks.beforeUpdate === "function") {
-            const reslut = await this.schema.hooks.beforeUpdate(query, data) || [query, data];
-            query = reslut[0];
-            data = reslut[1];
+            const result = await this.schema.hooks.beforeUpdate(query, data) || [query, data];
+            query = result[0];
+            data = result[1];
         }
         const { sql: whereSql, params: whereParams } = (0, parse_1.parseQuery)(query);
         const { sql: assignments, params: values } = (0, parse_1.parseUpdate)(data, this.schema);
@@ -258,17 +258,17 @@ class Executor {
             SET ${assignments} 
             WHERE ${whereSql} LIMIT 1
         `;
-        const reslut = await this.execute(finalSql, [...values, ...whereParams]);
+        const result = await this.execute(finalSql, [...values, ...whereParams]);
         if (typeof this.schema.hooks.afterUpdate === "function") {
-            return await this.schema.hooks.afterUpdate(reslut);
+            return await this.schema.hooks.afterUpdate(result);
         }
-        return reslut;
+        return result;
     }
     async updateMany(query, data) {
         if (typeof this.schema.hooks.beforeUpdate === "function") {
-            const reslut = await this.schema.hooks.beforeUpdate(query, data) || [query, data];
-            query = reslut[0];
-            data = reslut[1];
+            const result = await this.schema.hooks.beforeUpdate(query, data) || [query, data];
+            query = result[0];
+            data = result[1];
         }
         const { sql: whereSql, params: whereParams } = (0, parse_1.parseQuery)(query);
         const { sql: assignments, params: values } = (0, parse_1.parseUpdate)(data, this.schema);
@@ -277,11 +277,11 @@ class Executor {
             SET ${assignments} 
             WHERE ${whereSql}
         `;
-        const reslut = await this.execute(finalSql, [...values, ...whereParams]);
+        const result = await this.execute(finalSql, [...values, ...whereParams]);
         if (typeof this.schema.hooks.afterUpdate === "function") {
-            return await this.schema.hooks.afterUpdate(reslut);
+            return await this.schema.hooks.afterUpdate(result);
         }
-        return reslut;
+        return result;
     }
     async deleteOne(query) {
         if (typeof this.schema.hooks.beforeDelete === "function") {
@@ -305,6 +305,11 @@ class Executor {
         if (typeof this.schema.hooks.afterDelete === "function") {
             return await this.schema.hooks.afterDelete(result);
         }
+        return result;
+    }
+    async clear() {
+        const finalSql = `DELETE FROM ${(0, utils_1.quote)(this.table)}`;
+        const result = await this.execute(finalSql, []);
         return result;
     }
     async aggregate(options) {
