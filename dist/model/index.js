@@ -34,9 +34,9 @@ class Model {
             throw err;
         }
     }
-    find(query, options = {}) {
+    findMany(query, options = {}) {
         const execute = new executor_1.default(this.client, this.table, this.schema);
-        return execute.find(query || {}, options);
+        return execute.findMany(query || {}, options);
     }
     findOne(query, options = {}) {
         const execute = new executor_1.default(this.client, this.table, this.schema);

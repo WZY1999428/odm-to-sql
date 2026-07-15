@@ -73,22 +73,6 @@ class Executor {
         }
         return this.client.execute(joinSql, params);
     }
-    async find(query, options = {}) {
-        if (typeof this.schema.hooks.beforeFind === "function") {
-            query = await this.schema.hooks.beforeFind(query) || query;
-        }
-        const { sql, params } = (0, parse_1.parseQuery)(query);
-        const { limit = 0, offset = 0, fields = "*", sort = {} } = options;
-        let joinSql = `SELECT ${this.buildFields(fields)} FROM ${(0, utils_1.quote)(this.table)}`;
-        if (sql)
-            joinSql += ` WHERE ${sql} `;
-        joinSql += ` ${(0, parse_1.parseOrder)(sort)} ${this.buildLimit(limit, offset)} `;
-        const results = await this.execute(joinSql, params);
-        if (typeof this.schema.hooks.afterFind === "function") {
-            return this.schema.hooks.afterFind(results);
-        }
-        return results;
-    }
     async findOne(query, options = {}) {
         if (typeof this.schema.hooks.beforeFind === "function") {
             query = await this.schema.hooks.beforeFind(query) || query;
@@ -123,17 +107,17 @@ class Executor {
         if (typeof this.schema.hooks.beforeFind === "function") {
             query = await this.schema.hooks.beforeFind(query) || query;
         }
-        const { fields = "*", sort = {} } = options;
         const { sql, params } = (0, parse_1.parseQuery)(query);
+        const { limit = 0, offset = 0, fields = "*", sort = {} } = options;
         let joinSql = `SELECT ${this.buildFields(fields)} FROM ${(0, utils_1.quote)(this.table)}`;
         if (sql)
             joinSql += ` WHERE ${sql} `;
-        joinSql += ` ${(0, parse_1.parseOrder)(sort)}`;
-        const result = await this.execute(joinSql, params);
+        joinSql += ` ${(0, parse_1.parseOrder)(sort)} ${this.buildLimit(limit, offset)} `;
+        const results = await this.execute(joinSql, params);
         if (typeof this.schema.hooks.afterFind === "function") {
-            return await this.schema.hooks.afterFind(result[0]);
+            return this.schema.hooks.afterFind(results);
         }
-        return result[0];
+        return results;
     }
     prepareFields(data) {
         const fields = [];

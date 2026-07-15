@@ -11,7 +11,7 @@ declare class Model<T> {
     ready: Promise<void>;
     constructor(table: string, schema: Schema<T>, client: Cleint);
     private createTable;
-    find(query?: Query<T>, options?: FindOptions<T>): Promise<any>;
+    findMany(query?: Query<T>, options?: FindOptions<T>): Promise<any>;
     findOne(query?: Query<T>, options?: FindOneOptions<T>): Promise<any>;
     count(query?: Query<T>): Promise<number>;
     deleteOne(query?: Query<T>): Promise<ResultSetHeader>;

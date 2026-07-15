@@ -20,10 +20,9 @@ declare class Executor {
     rollback(): Promise<void>;
     release(): Promise<void>;
     execute(joinSql: string, params: any[]): Promise<import("mysql2").QueryResult>;
-    find<T>(query: Query<T>, options?: FindOptions<T>): Promise<any>;
     findOne<T>(query: Query<T>, options?: FindOneOptions<T>): Promise<any>;
     count<T>(query?: Query<T>): Promise<number>;
-    findMany<T>(query: Query<T>, options?: FindOneOptions<T>): Promise<any>;
+    findMany<T>(query: Query<T>, options?: FindOptions<T>): Promise<any>;
     private prepareFields;
     insert<T>(data: T, opt?: InsertOptions): Promise<import("mysql2").QueryResult>;
     insertMany<T>(data: T[], opt?: insertManyOptions): Promise<ResultSetHeader>;
