@@ -314,11 +314,9 @@ export class Schema<T> {
             if (config.type && typeof config.type === 'string') {
                 config.type = config.type.toUpperCase() as DataType;
             }
-
-            const { definition, alterTable: alterTableFromField } = this.parseFields(name, config, uniqueGroupMap);
-
+            const indexs = new Set<string>();
+            const { definition, alterTable: alterTableFromField } = this.parseFields(name, config, uniqueGroupMap, indexs);
             definitionArr.push(definition);
-
             if (alterTableFromField) {
                 alterTable = alterTableFromField;
             }
@@ -334,7 +332,7 @@ export class Schema<T> {
         };
     }
 
-    parseFields(name: string, config: FieldSchema, uniqueGroupMap: Map<string, string[]>): { definition: string, alterTable?: string | undefined } {
+    parseFields(name: string, config: FieldSchema, uniqueGroupMap: Map<string, string[]>, indexs: Set<string>): { definition: string, alterTable?: string | undefined } {
         let definition = "";
         let alterTable
         if (!config || !config.type || !allDataTypes.has(config.type)) {
@@ -360,6 +358,7 @@ export class Schema<T> {
         }
         if (config.nullable === false) definition += ' NOT NULL';
         if (config.unique === true) definition += ' UNIQUE';
+        if (config.index === true) indexs.add(`INDEX idx_${name}(${name})`)
 
         if (config.uniqueGroup && config.uniqueGroup.length > 0) {
             if (!Array.isArray(config.uniqueGroup) || config.uniqueGroup.some(item => typeof item !== 'string')) {
