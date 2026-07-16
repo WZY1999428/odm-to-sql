@@ -41,12 +41,12 @@ exports.Schema = exports.FieldSchemaBuilder = exports.DataType = void 0;
 const utils_1 = require("../utils");
 var DataType;
 (function (DataType) {
-    DataType["Tinyint"] = "TINYINT";
-    DataType["Smallint"] = "SMALLINT";
+    DataType["TinyInt"] = "TINYINT";
+    DataType["SmallInt"] = "SMALLINT";
     DataType["Mediumint"] = "MEDIUMINT";
     DataType["Int"] = "INT";
-    DataType["INTEGER"] = "INTEGER";
-    DataType["Bigint"] = "BIGINT";
+    DataType["IntEger"] = "INTEGER";
+    DataType["BigInt"] = "BIGINT";
     DataType["Float"] = "FLOAT";
     DataType["Double"] = "DOUBLE";
     DataType["Decimal"] = "DECIMAL";

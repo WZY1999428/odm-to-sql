@@ -52,12 +52,12 @@ import { FieldConstraints, FieldSchema, DefineTpe } from "./fieldConstraints"
 import { Query, AggregationOptions } from "../parse/operators";
 import { QueryResult } from "mysql2/promise"
 export enum DataType {
-    Tinyint = 'TINYINT',
-    Smallint = 'SMALLINT',
+    TinyInt = 'TINYINT',
+    SmallInt = 'SMALLINT',
     Mediumint = 'MEDIUMINT',
     Int = 'INT',
-    INTEGER = 'INTEGER',
-    Bigint = 'BIGINT',
+    IntEger = 'INTEGER',
+    BigInt = 'BIGINT',
     Float = 'FLOAT',
     Double = 'DOUBLE',
     Decimal = 'DECIMAL',
