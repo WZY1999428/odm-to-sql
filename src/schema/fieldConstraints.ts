@@ -1,5 +1,5 @@
 
-import { DataType } from "."
+import { DataType } from "./index.js"
 
 type AutoIncrement = {
     enabled: true,

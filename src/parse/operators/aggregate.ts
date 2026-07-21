@@ -1,6 +1,5 @@
-
-import { Query } from "./index";
-import { OrderBy } from "../parseOrder";
+import { Query } from "./index.js";
+import { OrderBy } from "../parseOrder.js";
 // 1. 聚合函数
 const AggregateFunctionsMap = {
     "$min": "MIN",

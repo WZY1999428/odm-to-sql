@@ -1,1 +1,0 @@
-{"version":3,"file":"parseQuery.d.ts","sourceRoot":"","sources":["../../src/parse/parseQuery.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,KAAK,EAA4B,MAAM,mBAAmB,CAAC;AAMzE,MAAM,CAAC,OAAO,UAAU,UAAU,CAAC,CAAC,EAAE,KAAK,EAAE,KAAK,CAAC,CAAC,CAAC,GAAG;IAAE,GAAG,EAAE,MAAM,CAAC;IAAC,MAAM,EAAE,GAAG,EAAE,CAAA;CAAE,CAmJrF"}

@@ -1,21 +1,23 @@
 {
   "name": "mysql-odm",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "High-performance, lightweight MySQL ODM with <1μs parsing speed and advanced aggregation support.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
     },
     "./schema": {
-      "require": "./dist/schema.js",
-      "types": "./dist/schema.d.ts"
+      "types": "./dist/schema/index.d.ts",
+      "import": "./dist/esm/schema/index.js",
+      "require": "./dist/cjs/schema/index.js"
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json",
     "watch:build": "tsc --watch",
     "test": "ts-node test.ts",
     "bench": "ts-node benchmark.ts"

@@ -46,10 +46,10 @@
 // '1970-01-01 00:00:01' UTC 到 '2038-01-19 03:14:07' UTC
 
 // 结束时间是第 2147483647 秒，北京时间 2038-1-19 11:14:07，格林尼治时间 2038年1月19日 凌晨 03:14:07
-import { quote } from "../utils";
+import { quote } from "../utils/index.js";
 import { ResultSetHeader } from "mysql2/promise"
-import { FieldConstraints, FieldSchema, DefineTpe } from "./fieldConstraints"
-import { Query, AggregationOptions } from "../parse/operators";
+import { FieldConstraints, FieldSchema, DefineTpe } from "./fieldConstraints.js"
+import { Query, AggregationOptions } from "../parse/operators/index.js";
 import { QueryResult } from "mysql2/promise"
 export enum DataType {
     TinyInt = 'TINYINT',

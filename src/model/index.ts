@@ -1,8 +1,8 @@
-import Cleint from "../client";
-import Executor from "./executor";
-import { Schema } from "../schema";
-import type { Query } from "../parse/operators/index"
-import type { FindOptions, FindOneOptions, InsertOptions, insertManyOptions, AggregationOptions } from "./options"
+import Cleint from "../client.js";
+import Executor from "./executor.js";
+import { Schema } from "../schema/index.js";
+import type { Query } from "../parse/operators/index.js"
+import type { FindOptions, FindOneOptions, InsertOptions, insertManyOptions, AggregationOptions } from "./options.js"
 import { ResultSetHeader } from "mysql2"
 
 

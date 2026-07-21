@@ -1,13 +1,13 @@
-import type { Logical } from "./logical"
-import type { QueryOperators } from "./conditional"
-import type { UpdateAtomic } from "./updateAtomic"
+import type { Logical } from "./logical.js"
+import type { QueryOperators } from "./conditional.js"
+import type { UpdateAtomic } from "./updateAtomic.js"
 import type {
     AggregateOps, PipelineStages, AggregationOptions, AggregateOption
     , AggregateFields, OneOrMany ,
-} from "./aggregate"
-export { LogicalMap } from "./logical"
-export { QueryOperatorMap } from "./conditional"
-export { UpdateAtomicMap } from "./updateAtomic"
+} from "./aggregate.js"
+export { LogicalMap } from "./logical.js"
+export { QueryOperatorMap } from "./conditional.js"
+export { UpdateAtomicMap } from "./updateAtomic.js"
 
 
 export type Query<T> = {
