@@ -53,7 +53,7 @@ interface SelfJoin {
     type: 'self';
     as: string;
 }
-type JsonArrayAgg<T> = {
+export type JsonArrayAgg<T> = {
     as: string;
     case?: Case<T>;
     fields: Record<string, string>[] | string;

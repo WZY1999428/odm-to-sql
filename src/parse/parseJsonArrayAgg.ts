@@ -2,7 +2,7 @@ import parseCase from "./parseCase.js";
 import { CaseMode } from "./operators/case.js";
 import { isObject, quote } from "../utils/index.js";
 import type { JsonArrayAgg } from "./operators/aggregate.js";
-export default function parseJsonArrayAgg(jsonArrayAgg: JsonArrayAgg<any>[]): string {
+export default function parseJsonArrayAgg<T>(jsonArrayAgg: JsonArrayAgg<T>[]): string {
     let sqlStr = "";
     for (const item of jsonArrayAgg) {
 

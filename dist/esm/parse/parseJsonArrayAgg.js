@@ -26,7 +26,7 @@ function parseJsonArrayAgg(jsonArrayAgg) {
             else if ((0, index_js_1.isObject)(fields)) {
                 if (item.case) {
                     item.case.mode = case_js_1.CaseMode.JSON_ARRAYAGG;
-                    item.case.forEach((item) => {
+                    item.case.$whens.forEach((item) => {
                         if (!item.then)
                             item.then = fields;
                     });

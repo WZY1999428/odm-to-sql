@@ -2,6 +2,7 @@ import { isObject, isStringArray, quote } from "../utils/index.js";
 import parseQuery from "./parseQuery.js"
 import parseOrder from "./parseOrder.js";
 import { JoinTypeMap } from "./operators/aggregate.js";
+import type { JsonArrayAgg } from "./operators/aggregate.js";
 import parseJsonArrayAgg from "./parseJsonArrayAgg.js";
 import {
     AggregationOptions, AggregateOption, OneOrMany
@@ -20,7 +21,7 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
     }
 
     if (Array.isArray(jsonArrayAgg)) {
-        sqlStr += ` ${parseJsonArrayAgg(jsonArrayAgg)} `
+        sqlStr += ` ${parseJsonArrayAgg(jsonArrayAgg as JsonArrayAgg<T>[])} `
     }
 
     const specsSql = [];
