@@ -51,7 +51,7 @@ function parseAggregate(table, options) {
                     }
                 }
                 if (expression) {
-                    sqlStr += ` ${expression}`;
+                    sqlStr += `, ${expression}`;
                     if (as) {
                         sqlStr += ` AS ${(0, index_js_1.quote)(as)}`;
                     }

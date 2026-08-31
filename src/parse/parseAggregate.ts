@@ -57,7 +57,7 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
                 }
 
                 if (expression) {
-                    sqlStr += ` ${expression}`;
+                    sqlStr += `, ${expression}`;
 
                     if (as) {
                         sqlStr += ` AS ${quote(as)}`;
