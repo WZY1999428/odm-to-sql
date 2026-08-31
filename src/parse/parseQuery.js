@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = parseQuery;
 const index_js_1 = require("./operators/index.js");
 const regex_js_1 = __importDefault(require("./operators/regex.js"));
+const index_js_2 = require("../utils/index.js");
 const queryCache = new Map();
 // 校验是否为合法的逻辑子项数组
 function parseQuery(query) {
@@ -33,6 +34,23 @@ function parseQuery(query) {
                 else if (key === '$nor') {
                     const arr = value.map(parse);
                     segments.push(`NOT (${arr.join(' OR ')})`);
+                }
+                continue;
+            }
+            if (key === "$jsonArrayAgg") {
+                if (typeof value === 'string') {
+                    segments.push(`JSON_ARRAYAGG(${(0, index_js_2.quote)(value)})`);
+                }
+                else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                    const join_object = [];
+                    for (const [k, v] of Object.entries(value)) {
+                        if (typeof v === 'string') {
+                            join_object.push((0, index_js_2.quote)(k));
+                            join_object.push((0, index_js_2.quote)(v));
+                        }
+                    }
+                    if (join_object.length)
+                        segments.push(`JSON_OBJECT(${join_object.join(', ')})`);
                 }
                 continue;
             }
