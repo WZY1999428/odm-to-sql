@@ -9,10 +9,11 @@ const index_js_1 = require("../utils/index.js");
 const parseQuery_js_1 = __importDefault(require("./parseQuery.js"));
 const parseOrder_js_1 = __importDefault(require("./parseOrder.js"));
 const aggregate_js_1 = require("./operators/aggregate.js");
+const parseJsonArrayAgg_js_1 = __importDefault(require("./parseJsonArrayAgg.js"));
 function parseAggregate(table, options) {
     let sqlStr = "";
     const params = [];
-    const { fields, specs, query, group, having, sort, joins, limit, offset } = options;
+    const { fields, specs, query, group, having, sort, joins, limit, offset, jsonArrayAgg } = options;
     if (Array.isArray(fields)) {
         if (!(0, index_js_1.isStringArray)(fields)) {
             throw new Error("fields must be string array");
@@ -21,6 +22,9 @@ function parseAggregate(table, options) {
     }
     else {
         sqlStr += ` * `;
+    }
+    if (Array.isArray(jsonArrayAgg)) {
+        sqlStr += ` ${(0, parseJsonArrayAgg_js_1.default)(jsonArrayAgg)} `;
     }
     const specsSql = [];
     if (specs) {

@@ -14,10 +14,14 @@ declare class Model<T> {
     findMany(query?: Query<T>, options?: FindOptions<T>): Promise<any>;
     findOne(query?: Query<T>, options?: FindOneOptions<T>): Promise<any>;
     count(query?: Query<T>): Promise<number>;
-    deleteOne(query?: Query<T>): Promise<import("mysql2").ResultSetHeader>;
+    deleteOne(query?: Query<T>): Promise<ResultSetHeader>;
+    deleteMany(query?: Query<T>): Promise<ResultSetHeader>;
     insert(data: T, opt?: InsertOptions): Promise<import("mysql2").QueryResult>;
-    insertMany(data: T[], opt?: insertManyOptions): Promise<import("mysql2").ResultSetHeader>;
-    update(query: Query<T>, data: Partial<T>): Promise<void | import("mysql2").ResultSetHeader>;
+    insertMany(data: T[], opt?: insertManyOptions): Promise<ResultSetHeader>;
+    update(query: Query<T>, data: Partial<T>): Promise<ResultSetHeader>;
+    aggregate<P>(options: AggregationOptions<T>): Promise<unknown[]>;
+    clear(): Promise<ResultSetHeader>;
+    execute(sql: string, params: any[]): Promise<import("mysql2").QueryResult>;
     /**
     *推荐当前使用连接池时使用
     * 从连接池借出一个绑定的执行器。

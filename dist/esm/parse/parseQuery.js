@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = parseQuery;
 const index_js_1 = require("./operators/index.js");
 const regex_js_1 = __importDefault(require("./operators/regex.js"));
-const queryCache = new Map();
 // 校验是否为合法的逻辑子项数组
 function parseQuery(query) {
     const params = [];

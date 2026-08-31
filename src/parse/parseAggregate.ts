@@ -2,6 +2,7 @@ import { isObject, isStringArray, quote } from "../utils/index.js";
 import parseQuery from "./parseQuery.js"
 import parseOrder from "./parseOrder.js";
 import { JoinTypeMap } from "./operators/aggregate.js";
+import parseJsonArrayAgg from "./parseJsonArrayAgg.js";
 import {
     AggregationOptions, AggregateOption, OneOrMany
 } from "./operators/index.js"
@@ -19,54 +20,7 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
     }
 
     if (Array.isArray(jsonArrayAgg)) {
-        for (const item of jsonArrayAgg) {
-
-            if (typeof item === "string") {
-                sqlStr += ` JSON_ARRAYAGG(${quote(item)}) `;
-                continue;
-            }
-
-            if (isObject(item)) {
-                const { fields, as } = item;
-
-                if (!fields) {
-                    throw new Error(
-                        "fields is required in jsonArrayAgg object"
-                    );
-                }
-
-                let expression = "";
-
-                if (typeof fields === "string") {
-                    expression = `JSON_ARRAYAGG(${quote(fields)})`;
-
-                } else if (isObject(fields)) {
-                    const jsonObject: string[] = [];
-
-                    for (const [key, value] of Object.entries(fields)) {
-                        if (typeof value === "string") {
-                            jsonObject.push(`'${key}'`);
-                            jsonObject.push(quote(value));
-                        }
-                    }
-
-                    if (jsonObject.length) {
-                        expression =
-                            `JSON_ARRAYAGG(JSON_OBJECT(${jsonObject.join(", ")}))`;
-                    }
-                }
-
-                if (expression) {
-                    sqlStr += `, ${expression}`;
-
-                    if (as) {
-                        sqlStr += ` AS ${quote(as)}`;
-                    }
-
-                    sqlStr += " ";
-                }
-            }
-        }
+        sqlStr += ` ${parseJsonArrayAgg(jsonArrayAgg)} `
     }
 
     const specsSql = [];

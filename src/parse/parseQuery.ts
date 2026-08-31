@@ -1,10 +1,7 @@
 import { LogicalMap, QueryOperatorMap } from "./operators/index.js";
 import type { Query, Logical, QueryOperators, } from "./operators/index.js";
 import jsRegexToMySQL from "./operators/regex.js"
-import { quote } from "../utils/index.js"
 type OperatorKeys = keyof QueryOperators<any>;
-
-const queryCache = new Map<string, string>();
 // 校验是否为合法的逻辑子项数组
 export default function parseQuery<T>(query: Query<T>): { sql: string, params: any[] } {
     const params: any[] = [];

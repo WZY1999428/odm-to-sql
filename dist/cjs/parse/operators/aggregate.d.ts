@@ -1,5 +1,6 @@
 import { Query } from "./index.js";
 import { OrderBy } from "../parseOrder.js";
+import type { Case } from "./case.js";
 declare const AggregateFunctionsMap: {
     readonly $min: "MIN";
     readonly $max: "MAX";
@@ -52,9 +53,15 @@ interface SelfJoin {
     type: 'self';
     as: string;
 }
+type JsonArrayAgg<T> = {
+    as: string;
+    case?: Case<T>;
+    fields: Record<string, string>[] | string;
+};
 type Join = NormalJoin | SelfJoin;
 export type AggregationOptions<T> = {
     fields: ColumnFields<T>[];
+    jsonArrayAgg?: (JsonArrayAgg<T> | string)[];
     specs?: AggregateFields<T>;
     query?: Query<T>;
     group?: (keyof T)[];
