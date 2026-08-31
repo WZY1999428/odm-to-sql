@@ -1,7 +1,6 @@
-import { parseObjectKeys } from "../utils";
-import { LogicalMap, QueryOperatorMap } from "./operators/index";
-import type { Query, Logical, QueryOperators, } from "./operators/index";
-import jsRegexToMySQL from "./operators/regex"
+import { LogicalMap, QueryOperatorMap } from "./operators/index.js";
+import type { Query, Logical, QueryOperators, } from "./operators/index.js";
+import jsRegexToMySQL from "./operators/regex.js"
 type OperatorKeys = keyof QueryOperators<any>;
 
 const queryCache = new Map<string, string>();

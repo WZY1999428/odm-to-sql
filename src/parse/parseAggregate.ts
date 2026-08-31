@@ -1,11 +1,10 @@
-import { parseJson, isObject, isStringArray, quote } from "../utils";
-import parseQuery from "./parseQuery"
-import parseOrder from "./parseOrder";
-import { JoinTypeMap } from "./operators/aggregate";
+import { isObject, isStringArray, quote } from "../utils/index.js";
+import parseQuery from "./parseQuery.js"
+import parseOrder from "./parseOrder.js";
+import { JoinTypeMap } from "./operators/aggregate.js";
 import {
     AggregationOptions, AggregateOption, OneOrMany
-    , AggregateFields,
-} from "./operators"
+} from "./operators/index.js"
 export default function parseAggregate<T>(table: string, options: AggregationOptions<T>): { sql: string, params: any } {
     let sqlStr: string = ""
     const params: any[] = []

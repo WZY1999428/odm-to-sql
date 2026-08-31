@@ -46,18 +46,18 @@
 // '1970-01-01 00:00:01' UTC 到 '2038-01-19 03:14:07' UTC
 
 // 结束时间是第 2147483647 秒，北京时间 2038-1-19 11:14:07，格林尼治时间 2038年1月19日 凌晨 03:14:07
-import { quote } from "../utils";
+import { quote } from "../utils/index.js";
 import { ResultSetHeader } from "mysql2/promise"
-import { FieldConstraints, FieldSchema, DefineTpe } from "./fieldConstraints"
-import { Query, AggregationOptions } from "../parse/operators";
+import { FieldConstraints, FieldSchema, DefineTpe } from "./fieldConstraints.js"
+import { Query, AggregationOptions } from "../parse/operators/index.js";
 import { QueryResult } from "mysql2/promise"
 export enum DataType {
-    Tinyint = 'TINYINT',
-    Smallint = 'SMALLINT',
+    TinyInt = 'TINYINT',
+    SmallInt = 'SMALLINT',
     Mediumint = 'MEDIUMINT',
     Int = 'INT',
-    INTEGER = 'INTEGER',
-    Bigint = 'BIGINT',
+    IntEger = 'INTEGER',
+    BigInt = 'BIGINT',
     Float = 'FLOAT',
     Double = 'DOUBLE',
     Decimal = 'DECIMAL',
@@ -244,15 +244,16 @@ function sanitizeConstraints(opt: FieldConstraints = {}): FieldConstraints {
     const {
         autoIncrement,
         nullable,
-        primary,
+        primaryKey,
         unique,
         required,
         uniqueGroup,
+        default: defaultValue,
         index
     } = opt;
     // 重新组合，只保留非 null/undefined 的属性
     return Object.fromEntries(Object.entries({
-        autoIncrement, nullable, primary, unique, required, uniqueGroup, index
+        autoIncrement, nullable, primaryKey, unique, required, uniqueGroup, default: defaultValue, index
     }).filter(([_, v]) => v !== undefined && v !== null)
     ) as FieldConstraints;
 }
@@ -269,7 +270,7 @@ type SchemaHooks<T, P = any> = {
     // 更新前执行
     beforeUpdate?: (query: Query<T>, data: Partial<T>) => Promise<[Query<T>, Partial<T>]>;
     // 更新后执行
-    afterUpdate?: (data: T) => Promise<void>;
+    afterUpdate?: (data: T) => Promise<ResultSetHeader | any | void>;
     // 删除前
     beforeDelete?: (query: Query<T>) => Promise<Query<T>>;
     // 删除后
@@ -287,9 +288,8 @@ type SchemaHooks<T, P = any> = {
 export class Schema<T> {
     fields: FieldsMap<T>;
     fieldsMap: Map<string, DataType>
-    table?: string
     hooks: SchemaHooks<T>;
-
+    table?: string
     constructor(fields: FieldsMap<T>, hooks?: SchemaHooks<T>) {
         this.fields = fields
         this.fieldsMap = new Map()
@@ -300,56 +300,81 @@ export class Schema<T> {
         this.hooks = hooks || {};
     }
 
-    toTableDefinition(): string {
+    toTableDefinition(): { definition: string, alterTable?: string | undefined } {
         if (this.fieldsMap.size === 0) {
             throw new Error("no fields")
         }
 
         const definitionArr = [];
         const uniqueGroupMap = new Map();
+        let alterTable;
         for (const name in this.fields) {
-            let definition = "";
             const config = this.fields[name];
-            if (!config || !config.type || !allDataTypes.has(config.type)) {
-                throw new Error(`${name} value is undefined`)
+
+            if (config.type && typeof config.type === 'string') {
+                config.type = config.type.toUpperCase() as DataType;
             }
-
-
-            const fieldName = quote(name);
-            const fieldType = config.type;
-            definition += `${fieldName} ${config.type}`
-
-            if (fieldType === DataType.Char || fieldType === DataType.VarChar) {
-                if (config.length) definition += `(${config.length}) `
-            } else if (fieldType === DataType.Decimal || fieldType === DataType.Float || fieldType === DataType.Double) {
-                if (config.m && config.d) definition += `(${config.m}, ${config.d}) `
-            } else if (fieldType === DataType.DateTime || fieldType === DataType.Time || fieldType === DataType.Timestamp) {
-                if (config.fps) definition += `(${config.fps}) `
-            }
-
-            if (config.primary === true) definition += ' PRIMARY KEY';
-            if (config.autoIncrement === true) definition += ' AUTO_INCREMENT';
-            if (config.nullable === false) definition += ' NOT NULL';
-            if (config.unique === true) definition += ' UNIQUE';
-
-            if (config.uniqueGroup && config.uniqueGroup.length > 0) {
-                if (!Array.isArray(config.uniqueGroup) || config.uniqueGroup.some(item => typeof item !== 'string')) {
-                    throw new Error("uniqueGroup must be a string array");
-                }
-                config.uniqueGroup.forEach(groupName => {
-                    const existing = uniqueGroupMap.get(groupName) || [];
-                    existing.push(fieldName);
-                    uniqueGroupMap.set(groupName, existing);
-                });
-            }
+            const indexs = new Set<string>();
+            const { definition, alterTable: alterTableFromField } = this.parseFields(name, config, uniqueGroupMap, indexs);
             definitionArr.push(definition);
+            if (alterTableFromField) {
+                alterTable = alterTableFromField;
+            }
         }
 
         for (const [groupName, columns] of uniqueGroupMap.entries()) {
             definitionArr.push(`UNIQUE KEY \`uk_${groupName}\` (${columns.join(", ")})`);
         }
 
-        return definitionArr.join(", ");
+        return {
+            definition: definitionArr.join(", "),
+            alterTable: alterTable
+        };
+    }
+
+    parseFields(name: string, config: FieldSchema, uniqueGroupMap: Map<string, string[]>, indexs: Set<string>): { definition: string, alterTable?: string | undefined } {
+        let definition = "";
+        let alterTable
+        if (!config || !config.type || !allDataTypes.has(config.type)) {
+            throw new Error(`${name} value is undefined`)
+        }
+        const fieldName = quote(name);
+        const fieldType = config.type;
+        definition += `${fieldName} ${config.type}`
+        if (fieldType === DataType.Char || fieldType === DataType.VarChar) {
+            if (config.length) definition += `(${config.length}) `
+        } else if (fieldType === DataType.Decimal || fieldType === DataType.Float || fieldType === DataType.Double) {
+            if (config.m && config.d) definition += `(${config.m}, ${config.d}) `
+        } else if (fieldType === DataType.DateTime || fieldType === DataType.Time || fieldType === DataType.Timestamp) {
+            if (config.fps) definition += `(${config.fps}) `
+        }
+
+        if (config.primaryKey === true) definition += ' PRIMARY KEY';
+        if (config.autoIncrement === true) definition += ' AUTO_INCREMENT';
+        if (config.default !== undefined) definition += ` DEFAULT ${config.default}`;
+        else if (typeof config.autoIncrement === 'object' && config.autoIncrement?.enabled === true) {
+            definition += ' AUTO_INCREMENT';
+            alterTable = `ALTER TABLE \`${this.table}\` AUTO_INCREMENT = ${config.autoIncrement.start};`;
+        }
+        if (config.nullable === false) definition += ' NOT NULL';
+        if (config.unique === true) definition += ' UNIQUE';
+        if (config.index === true) indexs.add(`INDEX idx_${name}(${name})`)
+
+        if (config.uniqueGroup && config.uniqueGroup.length > 0) {
+            if (!Array.isArray(config.uniqueGroup) || config.uniqueGroup.some(item => typeof item !== 'string')) {
+                throw new Error("uniqueGroup must be a string array");
+            }
+            config.uniqueGroup.forEach(groupName => {
+                const existing = uniqueGroupMap.get(groupName) || [];
+                existing.push(fieldName);
+                uniqueGroupMap.set(groupName, existing);
+            });
+        }
+
+        return {
+            definition,
+            alterTable
+        };
     }
 
 }

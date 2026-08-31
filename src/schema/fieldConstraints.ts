@@ -1,9 +1,16 @@
 
-import { DataType } from "."
+import { DataType } from "./index.js"
+
+type AutoIncrement = {
+    enabled: true,
+    start: number
+}
+
 export type FieldConstraints = {
     required?: boolean | undefined,
-    primary?: boolean | undefined,
-    autoIncrement?: boolean | undefined,
+    primaryKey?: boolean | undefined,
+    autoIncrement?: boolean | AutoIncrement | undefined,
+    default?: any | undefined,
     nullable?: boolean | undefined,
     index?: boolean | undefined,
     unique?: boolean | undefined,

@@ -1,6 +1,5 @@
-
-import { Query } from "./index";
-import { OrderBy } from "../parseOrder";
+import { Query } from "./index.js";
+import { OrderBy } from "../parseOrder.js";
 // 1. 聚合函数
 const AggregateFunctionsMap = {
     "$min": "MIN",
@@ -33,6 +32,7 @@ export type AggregateOption<T> = {
 export type OneOrMany<T> = T | T[];
 
 // 关键点：OneOrMany 让它可以是对象，也可以是对象数组
+
 export type AggregateFields<T> = {
     [key in AggregateOps]?: OneOrMany<AggregateOption<T> | keyof T>;
 } & {
