@@ -30,4 +30,3 @@ exports.QueryOperatorMap = {
 };
 // 也就是：这个数组本身的类型
 // export type QueryOperators = keyof typeof QueryOperatorMap;
-//# sourceMappingURL=conditional.js.map

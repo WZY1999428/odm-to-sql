@@ -8,4 +8,3 @@ exports.UpdateAtomicMap = {
     $min: "",
     $concat: "",
 };
-//# sourceMappingURL=updateAtomic.js.map

@@ -6,12 +6,12 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/types/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
     },
     "./schema": {
-      "types": "./dist/schema/index.d.ts",
+      "types": "./dist/types/schema/index.d.ts",
       "import": "./dist/esm/schema/index.js",
       "require": "./dist/cjs/schema/index.js"
     }

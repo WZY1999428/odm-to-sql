@@ -56,4 +56,3 @@ function parseUpdate(data, schema) {
     }
     return { sql: setSql.join(', '), params };
 }
-//# sourceMappingURL=parseUpdate.js.map

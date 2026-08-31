@@ -14,4 +14,3 @@ exports.LogicalMap = {
     '$not': "NOT",
     '$nor': "NOT OR"
 };
-//# sourceMappingURL=logical.js.map

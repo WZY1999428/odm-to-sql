@@ -1,9 +1,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
+    "rootDir": "./src",
+    "declarationDir": "./dist/types",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "outDir": "./dist/esm",

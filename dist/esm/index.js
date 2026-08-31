@@ -71,4 +71,3 @@ class MySqlODM {
     }
 }
 exports.default = MySqlODM;
-//# sourceMappingURL=index.js.map

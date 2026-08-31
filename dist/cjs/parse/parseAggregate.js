@@ -147,4 +147,3 @@ function joinSpec(type, spec, params) {
 function isAggregateOption(value) {
     return value !== null && typeof value === "object" && !Array.isArray(value);
 }
-//# sourceMappingURL=parseAggregate.js.map

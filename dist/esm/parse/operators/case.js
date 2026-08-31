@@ -6,4 +6,3 @@ var CaseMode;
     CaseMode["JSON_ARRAYAGG"] = "JSON_ARRAYAGG";
     CaseMode["DEFAULT"] = "DEFAULT";
 })(CaseMode || (exports.CaseMode = CaseMode = {}));
-//# sourceMappingURL=case.js.map

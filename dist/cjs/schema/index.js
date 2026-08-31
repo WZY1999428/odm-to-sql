@@ -276,4 +276,3 @@ class Schema {
     }
 }
 exports.Schema = Schema;
-//# sourceMappingURL=index.js.map
