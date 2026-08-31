@@ -1,10 +1,7 @@
-import { parseObjectKeys } from "../utils";
-import { LogicalMap, QueryOperatorMap } from "./operators/index";
-import type { Query, Logical, QueryOperators, } from "./operators/index";
-import jsRegexToMySQL from "./operators/regex"
+import { LogicalMap, QueryOperatorMap } from "./operators/index.js";
+import type { Query, Logical, QueryOperators, } from "./operators/index.js";
+import jsRegexToMySQL from "./operators/regex.js"
 type OperatorKeys = keyof QueryOperators<any>;
-
-const queryCache = new Map<string, string>();
 // 校验是否为合法的逻辑子项数组
 export default function parseQuery<T>(query: Query<T>): { sql: string, params: any[] } {
     const params: any[] = [];
@@ -53,7 +50,6 @@ export default function parseQuery<T>(query: Query<T>): { sql: string, params: a
                     params.push(jsRegexToMySQL(value));
 
                 } else {
-
                     throwError(`The value for "$regex" must be a JavaScript RegExp instance. Received: ${typeof value}`);
 
                 }

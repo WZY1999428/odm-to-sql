@@ -1,6 +1,6 @@
-
-import { Query } from "./index";
-import { OrderBy } from "../parseOrder";
+import { Query } from "./index.js";
+import { OrderBy } from "../parseOrder.js";
+import type { Case } from "./case.js";
 // 1. 聚合函数
 const AggregateFunctionsMap = {
     "$min": "MIN",
@@ -59,7 +59,7 @@ export const JoinTypeMap = {
 interface NormalJoin {
     table: string;
     on: Record<string, string>; // 必填
-    type?: JoinType; 
+    type?: JoinType;
     as?: string;
 }
 
@@ -73,10 +73,18 @@ interface SelfJoin {
 
 // 3. 组合导出
 
-type Join =  NormalJoin | SelfJoin;
+
+export type JsonArrayAgg<T> = {
+    as: string,
+    case?: Case<T>,
+    fields: Record<string, string>[] | string
+}
+
+type Join = NormalJoin | SelfJoin;
 
 export type AggregationOptions<T> = {
     fields: ColumnFields<T>[];      // 支持 ['u.id', 'p.title']
+    jsonArrayAgg?: (JsonArrayAgg<T> | string)[];
     specs?: AggregateFields<T>;      // 选填：你要聚合哪些字段？
     query?: Query<T>;              // 选填：过滤条件 (WHERE)
     group?: (keyof T)[];         // 选填：按什么分组？

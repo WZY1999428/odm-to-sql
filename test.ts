@@ -19,8 +19,8 @@ type User = {
         database: "1111"
     }, "connection")
 
-    const user = odm.model<User>("user", new Schema<User>({
-        id: FieldSchemaBuilder.Define(DataType.Int, { primary: true, autoIncrement: true }),
+    const user = await odm.model<User>("user", new Schema<User>({
+        id: FieldSchemaBuilder.Define(DataType.Int, { autoIncrement: true }),
         name: FieldSchemaBuilder.VarChar(),
         email: FieldSchemaBuilder.VarChar(),
         age: FieldSchemaBuilder.Define(DataType.Int),

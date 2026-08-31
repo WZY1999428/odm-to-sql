@@ -1,15 +1,16 @@
-import { parseJson, isObject, isStringArray, quote } from "../utils";
-import parseQuery from "./parseQuery"
-import parseOrder from "./parseOrder";
-import { JoinTypeMap } from "./operators/aggregate";
+import { isObject, isStringArray, quote } from "../utils/index.js";
+import parseQuery from "./parseQuery.js"
+import parseOrder from "./parseOrder.js";
+import { JoinTypeMap } from "./operators/aggregate.js";
+import type { JsonArrayAgg } from "./operators/aggregate.js";
+import parseJsonArrayAgg from "./parseJsonArrayAgg.js";
 import {
     AggregationOptions, AggregateOption, OneOrMany
-    , AggregateFields,
-} from "./operators"
+} from "./operators/index.js"
 export default function parseAggregate<T>(table: string, options: AggregationOptions<T>): { sql: string, params: any } {
     let sqlStr: string = ""
     const params: any[] = []
-    const { fields, specs, query, group, having, sort, joins, limit, offset } = options;
+    const { fields, specs, query, group, having, sort, joins, limit, offset, jsonArrayAgg } = options;
     if (Array.isArray(fields)) {
         if (!isStringArray(fields)) {
             throw new Error("fields must be string array");
@@ -18,6 +19,11 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
     } else {
         sqlStr += ` * `
     }
+
+    if (Array.isArray(jsonArrayAgg)) {
+        sqlStr += ` ${parseJsonArrayAgg(jsonArrayAgg as JsonArrayAgg<T>[])} `
+    }
+
     const specsSql = [];
     if (specs) {
         if (!isObject(specs)) {

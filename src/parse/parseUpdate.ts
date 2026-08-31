@@ -1,6 +1,6 @@
-import type { Update } from "./operators/index";
-import { DataType, Schema } from "../schema";
-import { parseJson, quote } from "../utils";
+import type { Update } from "./operators/index.js";
+import { DataType, Schema } from "../schema/index.js";
+import { parseJson, quote } from "../utils/index.js";
 function throwIfObject(key: string, value: any): void {
     if (typeof value !== "object" || value === null || Array.isArray(value)) {
         throw new Error(`Invalid value for ${key} operator: ${JSON.stringify(value)}`);

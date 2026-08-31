@@ -1,5 +1,5 @@
-import type { OrderBy } from "../parse/parseOrder"
-export type { AggregationOptions } from "../parse/operators"
+import type { OrderBy } from "../parse/parseOrder.js"
+export type { AggregationOptions } from "../parse/operators/index.js"
 export type FindOneOptions<T> = {
     // 字段
     fields?: string[],
