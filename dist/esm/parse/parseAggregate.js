@@ -41,7 +41,7 @@ function parseAggregate(table, options) {
                     const jsonObject = [];
                     for (const [key, value] of Object.entries(fields)) {
                         if (typeof value === "string") {
-                            jsonObject.push((0, index_js_1.quote)(key));
+                            jsonObject.push(`'${key}'`);
                             jsonObject.push((0, index_js_1.quote)(value));
                         }
                     }

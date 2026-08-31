@@ -45,7 +45,7 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
 
                     for (const [key, value] of Object.entries(fields)) {
                         if (typeof value === "string") {
-                            jsonObject.push(quote(key));
+                            jsonObject.push(`'${key}'`);
                             jsonObject.push(quote(value));
                         }
                     }
