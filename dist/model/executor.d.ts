@@ -9,7 +9,7 @@ declare class Executor {
     private table;
     private schema;
     private conn?;
-    constructor(client: Client, table: string, schema: Schema<any>, conn?: newConnection);
+    constructor(client: Client, table: string, schema: Schema<any>, conn?: newConnection | undefined);
     private buildFields;
     private buildLimit;
     /** 开启事务 */
@@ -25,10 +25,10 @@ declare class Executor {
     count<T>(query?: Query<T>): Promise<number>;
     findMany<T>(query: Query<T>, options?: FindOneOptions<T>): Promise<any>;
     private prepareFields;
-    insert<T>(data: T, opt?: InsertOptions): Promise<any>;
+    insert<T>(data: T, opt?: InsertOptions): Promise<import("mysql2").QueryResult>;
     insertMany<T>(data: T[], opt?: insertManyOptions): Promise<ResultSetHeader>;
-    update<T>(query: Query<T>, data: Partial<T>, opt?: UpdateOptions): Promise<any>;
-    updateMany<T>(query: Query<T>, data: Partial<T>, opt?: UpdateOptions): Promise<any>;
+    update<T>(query: Query<T>, data: Partial<T>, opt?: UpdateOptions): Promise<void | ResultSetHeader>;
+    updateMany<T>(query: Query<T>, data: Partial<T>, opt?: UpdateOptions): Promise<void | ResultSetHeader>;
     deleteOne<T>(query: Query<T>): Promise<ResultSetHeader>;
     deleteMany<T>(query: Query<T>): Promise<ResultSetHeader>;
     Aggregate<T, P>(options: AggregationOptions<T>): Promise<P[]>;

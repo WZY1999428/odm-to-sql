@@ -17,8 +17,11 @@ function quote(identifier) {
         return identifier;
     // 处理已存在的反引号，防止重复添加
     const clean = identifier.replace(/`/g, '');
+    const parts = clean.split(".");
     // 支持带点的路径（如 table.column）
-    return `\`${clean}\``;
+    return parts
+        .map(part => `\`${part}\``)
+        .join(".");
 }
 /**
  * 批量处理多个字段名
