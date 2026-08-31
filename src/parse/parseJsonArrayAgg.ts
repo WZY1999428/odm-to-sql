@@ -1,7 +1,8 @@
 import parseCase from "./parseCase.js";
 import { CaseMode } from "./operators/case.js";
 import { isObject, quote } from "../utils/index.js";
-export default function parseJsonArrayAgg(jsonArrayAgg: any[]): string {
+import type { JsonArrayAgg } from "./operators/aggregate.js";
+export default function parseJsonArrayAgg(jsonArrayAgg: JsonArrayAgg<any>[]): string {
     let sqlStr = "";
     for (const item of jsonArrayAgg) {
 
@@ -27,7 +28,7 @@ export default function parseJsonArrayAgg(jsonArrayAgg: any[]): string {
             } else if (isObject(fields)) {
                 if (item.case) {
                     item.case.mode = CaseMode.JSON_ARRAYAGG;
-                    item.case.forEach((item: any) => {
+                    item.case.$whens.forEach((item: any) => {
                         if (!item.then) item.then = fields;
                     });
                     expression = `COALESCE(${parseCase(item.case)}, JSON_ARRAY())`;

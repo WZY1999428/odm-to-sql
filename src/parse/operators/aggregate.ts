@@ -74,7 +74,7 @@ interface SelfJoin {
 // 3. 组合导出
 
 
-type JsonArrayAgg<T> = {
+export type JsonArrayAgg<T> = {
     as: string,
     case?: Case<T>,
     fields: Record<string, string>[] | string
