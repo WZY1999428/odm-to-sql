@@ -52,9 +52,14 @@ interface SelfJoin {
     type: 'self';
     as: string;
 }
+type JsonArrayAgg = {
+    as: string;
+    fields: Record<string, string>[] | string;
+};
 type Join = NormalJoin | SelfJoin;
 export type AggregationOptions<T> = {
     fields: ColumnFields<T>[];
+    jsonArrayAgg?: (JsonArrayAgg | string)[];
     specs?: AggregateFields<T>;
     query?: Query<T>;
     group?: (keyof T)[];

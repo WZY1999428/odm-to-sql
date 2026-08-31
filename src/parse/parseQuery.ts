@@ -44,23 +44,6 @@ export default function parseQuery<T>(query: Query<T>): { sql: string, params: a
                 continue;
             }
 
-            if (key === "$jsonArrayAgg") {
-                if (typeof value === 'string') {
-                    segments.push(`JSON_ARRAYAGG(${quote(value)})`);
-                } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                    const join_object: string[] = [];
-                    for (const [k, v] of Object.entries(value)) {
-                        if (typeof v === 'string') {
-                            join_object.push(quote(k));
-                            join_object.push(quote(v));
-                        }
-                    }
-                    if (join_object.length) segments.push(`JSON_OBJECT(${join_object.join(', ')})`);
-
-                }
-                continue;
-            }
-
             if (key === "$regex") {
 
                 if (value && value instanceof RegExp) {

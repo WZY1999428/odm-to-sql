@@ -12,7 +12,7 @@ const aggregate_js_1 = require("./operators/aggregate.js");
 function parseAggregate(table, options) {
     let sqlStr = "";
     const params = [];
-    const { fields, specs, query, group, having, sort, joins, limit, offset } = options;
+    const { fields, specs, query, group, having, sort, joins, limit, offset, jsonArrayAgg } = options;
     if (Array.isArray(fields)) {
         if (!(0, index_js_1.isStringArray)(fields)) {
             throw new Error("fields must be string array");
@@ -21,6 +21,44 @@ function parseAggregate(table, options) {
     }
     else {
         sqlStr += ` * `;
+    }
+    if (Array.isArray(jsonArrayAgg)) {
+        for (const item of jsonArrayAgg) {
+            if (typeof item === "string") {
+                sqlStr += ` JSON_ARRAYAGG(${(0, index_js_1.quote)(item)}) `;
+                continue;
+            }
+            if ((0, index_js_1.isObject)(item)) {
+                const { fields, as } = item;
+                if (!fields) {
+                    throw new Error("fields is required in jsonArrayAgg object");
+                }
+                let expression = "";
+                if (typeof fields === "string") {
+                    expression = `JSON_ARRAYAGG(${(0, index_js_1.quote)(fields)})`;
+                }
+                else if ((0, index_js_1.isObject)(fields)) {
+                    const jsonObject = [];
+                    for (const [key, value] of Object.entries(fields)) {
+                        if (typeof value === "string") {
+                            jsonObject.push((0, index_js_1.quote)(key));
+                            jsonObject.push((0, index_js_1.quote)(value));
+                        }
+                    }
+                    if (jsonObject.length) {
+                        expression =
+                            `JSON_ARRAYAGG(JSON_OBJECT(${jsonObject.join(", ")}))`;
+                    }
+                }
+                if (expression) {
+                    sqlStr += ` ${expression}`;
+                    if (as) {
+                        sqlStr += ` AS ${(0, index_js_1.quote)(as)}`;
+                    }
+                    sqlStr += " ";
+                }
+            }
+        }
     }
     const specsSql = [];
     if (specs) {

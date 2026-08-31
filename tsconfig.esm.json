@@ -1,6 +1,9 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "outDir": "./dist/esm",

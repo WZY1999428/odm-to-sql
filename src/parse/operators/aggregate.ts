@@ -58,7 +58,7 @@ export const JoinTypeMap = {
 interface NormalJoin {
     table: string;
     on: Record<string, string>; // 必填
-    type?: JoinType; 
+    type?: JoinType;
     as?: string;
 }
 
@@ -72,10 +72,17 @@ interface SelfJoin {
 
 // 3. 组合导出
 
-type Join =  NormalJoin | SelfJoin;
+
+type JsonArrayAgg = {
+    as: string,
+    fields: Record<string, string>[] | string
+}
+
+type Join = NormalJoin | SelfJoin;
 
 export type AggregationOptions<T> = {
     fields: ColumnFields<T>[];      // 支持 ['u.id', 'p.title']
+    jsonArrayAgg?: (JsonArrayAgg | string)[];
     specs?: AggregateFields<T>;      // 选填：你要聚合哪些字段？
     query?: Query<T>;              // 选填：过滤条件 (WHERE)
     group?: (keyof T)[];         // 选填：按什么分组？
