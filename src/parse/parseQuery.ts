@@ -1,6 +1,7 @@
 import { LogicalMap, QueryOperatorMap } from "./operators/index.js";
 import type { Query, Logical, QueryOperators, } from "./operators/index.js";
 import jsRegexToMySQL from "./operators/regex.js"
+import { quote } from "../utils/index.js"
 type OperatorKeys = keyof QueryOperators<any>;
 
 const queryCache = new Map<string, string>();
@@ -43,6 +44,23 @@ export default function parseQuery<T>(query: Query<T>): { sql: string, params: a
                 continue;
             }
 
+            if (key === "$jsonArrayAgg") {
+                if (typeof value === 'string') {
+                    segments.push(`JSON_ARRAYAGG(${quote(value)})`);
+                } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                    const join_object: string[] = [];
+                    for (const [k, v] of Object.entries(value)) {
+                        if (typeof v === 'string') {
+                            join_object.push(quote(k));
+                            join_object.push(quote(v));
+                        }
+                    }
+                    if (join_object.length) segments.push(`JSON_OBJECT(${join_object.join(', ')})`);
+
+                }
+                continue;
+            }
+
             if (key === "$regex") {
 
                 if (value && value instanceof RegExp) {
@@ -52,7 +70,6 @@ export default function parseQuery<T>(query: Query<T>): { sql: string, params: a
                     params.push(jsRegexToMySQL(value));
 
                 } else {
-
                     throwError(`The value for "$regex" must be a JavaScript RegExp instance. Received: ${typeof value}`);
 
                 }
