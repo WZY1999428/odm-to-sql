@@ -16,9 +16,9 @@ export default function parseCase<T>(caseStmt: Case<T>): string {
     for (const item of $whens) {
         const { when, then } = item;
         if (typeof then === 'string') {
-            whenClauses.push(`WHEN ${parseQuery(when)} THEN ${quote(then)}`);
-        } else if (isObject(then) && mode === CaseMode.JSON_ARRAYAGG) {
-            whenClauses.push(`WHEN ${parseQuery(when)} THEN ${parseJsonArrayAgg(then)}`);
+            whenClauses.push(` WHEN ${parseQuery(when)} THEN ${quote(then)} `);
+        } else if (mode === CaseMode.JSON_ARRAYAGG) {
+            if (isObject(when)) whenClauses.push(` WHEN ${parseQuery(when)} `);
         }
     }
 

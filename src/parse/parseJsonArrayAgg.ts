@@ -25,18 +25,21 @@ export default function parseJsonArrayAgg(jsonArrayAgg: any[]): string {
                 expression = `JSON_ARRAYAGG(${quote(fields)})`;
 
             } else if (isObject(fields)) {
-                const jsonObject: string[] = [];
-                for (const [key, value] of Object.entries(fields)) {
-                    if (typeof value === "string") {
-                        jsonObject.push(`'${key}'`);
-                        jsonObject.push(quote(value));
+                if (item.case) {
+                    item.case.mode = CaseMode.JSON_ARRAYAGG;
+                    item.case.forEach((item: any) => {
+                        if (!item.then) item.then = fields;
+                    });
+                    expression = `COALESCE(${parseCase(item.case)}, JSON_ARRAY())`;
+                } else {
+                    const jsonObject: string[] = [];
+                    for (const [key, value] of Object.entries(fields)) {
+                        if (typeof value === "string") {
+                            jsonObject.push(`'${key}'`);
+                            jsonObject.push(quote(value));
+                        }
                     }
-                }
-                if (jsonObject.length) {
-                    if (item.case) {
-                        item.case.mode = CaseMode.JSON_ARRAYAGG;
-                        expression = `COALESCE(${parseCase(item.case)}, JSON_ARRAY())`;
-                    } else {
+                    if (jsonObject.length) {
                         expression = `JSON_ARRAYAGG(JSON_OBJECT(${jsonObject.join(", ")}))`;
                     }
                 }

@@ -24,19 +24,23 @@ function parseJsonArrayAgg(jsonArrayAgg) {
                 expression = `JSON_ARRAYAGG(${(0, index_js_1.quote)(fields)})`;
             }
             else if ((0, index_js_1.isObject)(fields)) {
-                const jsonObject = [];
-                for (const [key, value] of Object.entries(fields)) {
-                    if (typeof value === "string") {
-                        jsonObject.push(`'${key}'`);
-                        jsonObject.push((0, index_js_1.quote)(value));
-                    }
+                if (item.case) {
+                    item.case.mode = case_js_1.CaseMode.JSON_ARRAYAGG;
+                    item.case.forEach((item) => {
+                        if (!item.then)
+                            item.then = fields;
+                    });
+                    expression = `COALESCE(${(0, parseCase_js_1.default)(item.case)}, JSON_ARRAY())`;
                 }
-                if (jsonObject.length) {
-                    if (item.case) {
-                        item.case.mode = case_js_1.CaseMode.JSON_ARRAYAGG;
-                        expression = `COALESCE(${(0, parseCase_js_1.default)(item.case)}, JSON_ARRAY())`;
+                else {
+                    const jsonObject = [];
+                    for (const [key, value] of Object.entries(fields)) {
+                        if (typeof value === "string") {
+                            jsonObject.push(`'${key}'`);
+                            jsonObject.push((0, index_js_1.quote)(value));
+                        }
                     }
-                    else {
+                    if (jsonObject.length) {
                         expression = `JSON_ARRAYAGG(JSON_OBJECT(${jsonObject.join(", ")}))`;
                     }
                 }
