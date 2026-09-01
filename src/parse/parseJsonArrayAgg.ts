@@ -1,9 +1,11 @@
 import parseCase from "./parseCase.js";
 import { CaseMode } from "./operators/case.js";
 import { isObject, quote } from "../utils/index.js";
-import type { JsonArrayAgg } from "./operators/aggregate.js";
-export default function parseJsonArrayAgg<T>(jsonArrayAgg: JsonArrayAgg<T>[]): string {
+import type { JsonArrayAgg, JsonArrayAggFields } from "./operators/aggregate.js";
+
+export default function parseJsonArrayAgg<T>(jsonArrayAgg: JsonArrayAgg<T>[]): { sql: string; params: any[] } {
     let sqlStr = "";
+    let params: any[] = [];
     for (const item of jsonArrayAgg) {
 
         if (typeof item === "string") {
@@ -24,24 +26,19 @@ export default function parseJsonArrayAgg<T>(jsonArrayAgg: JsonArrayAgg<T>[]): s
 
             if (typeof fields === "string") {
                 expression = `JSON_ARRAYAGG(${quote(fields)})`;
-
             } else if (isObject(fields)) {
                 if (item.case) {
                     item.case.mode = CaseMode.JSON_ARRAYAGG;
                     item.case.$whens.forEach((item: any) => {
                         if (!item.then) item.then = fields;
                     });
-                    expression = `COALESCE(${parseCase(item.case)}, JSON_ARRAY())`;
+                    const { sql, params: caseParams } = parseCase(item.case);
+                    params.push(...caseParams);
+                    expression = `JSON_ARRAYAGG(${sql})`;
                 } else {
-                    const jsonObject: string[] = [];
-                    for (const [key, value] of Object.entries(fields)) {
-                        if (typeof value === "string") {
-                            jsonObject.push(`'${key}'`);
-                            jsonObject.push(quote(value));
-                        }
-                    }
-                    if (jsonObject.length) {
-                        expression = `JSON_ARRAYAGG(JSON_OBJECT(${jsonObject.join(", ")}))`;
+                    const jsonObject = joinJsonObject(fields);
+                    if (jsonObject) {
+                        expression = `JSON_ARRAYAGG(JSON_OBJECT(${jsonObject}))`;
                     }
                 }
             }
@@ -57,5 +54,17 @@ export default function parseJsonArrayAgg<T>(jsonArrayAgg: JsonArrayAgg<T>[]): s
             }
         }
     }
-    return sqlStr;
+    return { sql: sqlStr, params };
+}
+
+export function joinJsonObject(fields: JsonArrayAggFields) {
+    const jsonObject: string[] = [];
+    for (const [key, value] of Object.entries(fields)) {
+        if (typeof value === "string") {
+            jsonObject.push(`'${key}'`);
+            jsonObject.push(quote(value));
+        }
+    }
+    return jsonObject.join(" , ");
+
 }

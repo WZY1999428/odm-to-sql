@@ -74,10 +74,12 @@ interface SelfJoin {
 // 3. 组合导出
 
 
+export type JsonArrayAggFields = Record<string, string> | string
+
 export type JsonArrayAgg<T> = {
     as: string,
     case?: Case<T>,
-    fields: Record<string, string>[] | string
+    fields: JsonArrayAggFields
 }
 
 type Join = NormalJoin | SelfJoin;
@@ -87,7 +89,7 @@ export type AggregationOptions<T> = {
     jsonArrayAgg?: (JsonArrayAgg<T> | string)[];
     specs?: AggregateFields<T>;      // 选填：你要聚合哪些字段？
     query?: Query<T>;              // 选填：过滤条件 (WHERE)
-    group?: (keyof T)[];         // 选填：按什么分组？
+    group?: string[];         // 选填：按什么分组？
     having?: Query<T>;             // 选填：分组后的过滤 (HAVING)
     sort?: OrderBy<T>; // 排序
     joins?: Join[];              // 连表

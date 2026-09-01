@@ -1,5 +1,5 @@
-const MySqlODM = require('./dist/index.js');
-const { Schema, FieldSchemaBuilder, DataType } = require('./dist/schema');
+const MySqlODM = require('./dist/cjs/index');
+const { Schema, FieldSchemaBuilder, DataType } = require('./dist/cjs/schema');
 (async () => {
     const odm = new MySqlODM();
     await odm.use({

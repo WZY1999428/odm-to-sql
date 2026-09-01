@@ -58,11 +58,11 @@ export default function parseQuery<T>(query: Query<T>): { sql: string, params: a
             }
 
 
-            if (key.includes('.')) {
-                const [column, ...path] = key.split('.');
-                const jsonPath = `$.${path.join('.')}`;
-                key = `${column}->>'${jsonPath}'` as keyof Query<T>;
-            }
+            // if (key.includes('.')) {
+            //     const [column, ...path] = key.split('.');
+            //     const jsonPath = `$.${path.join('.')}`;
+            //     key = `${column}->>'${jsonPath}'` as keyof Query<T>;
+            // }
 
             // 2. 处理普通字段
             if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -90,7 +90,6 @@ export default function parseQuery<T>(query: Query<T>): { sql: string, params: a
                         params.push(Math.min(...val), Math.max(...val));
 
                     } else if (QueryOperatorMap[op as OperatorKeys]) {
-
 
                         if (op == "$in" || op == "$nin") {
 
@@ -122,11 +121,22 @@ export default function parseQuery<T>(query: Query<T>): { sql: string, params: a
                             if (val && typeof val !== "string" && typeof val !== 'number') {
                                 throwError(`"${op}" at "${key}" only accepts string or number values. Received: ${typeof val}`)
                             }
+
+                            console.log(op, val, value);
+
                             const sqlOp = QueryOperatorMap[op as OperatorKeys];
 
-                            segments.push(`${key} ${sqlOp} ?`);
+                            if ((val === null || val === undefined) && ["$eq", "$ne"].includes(op)) {
+                                if (op == "$eq") {
+                                    segments.push(`${key} IS NULL`);
+                                } else {
+                                    segments.push(`${key} IS NOT NULL`);
+                                }
+                            } else {
+                                segments.push(`${key} ${sqlOp} ?`);
+                                params.push(val);
+                            }
 
-                            params.push(value[op]);
                         }
                     } else if (typeof val === 'object') {
 

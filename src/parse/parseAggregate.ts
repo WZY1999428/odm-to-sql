@@ -21,7 +21,9 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
     }
 
     if (Array.isArray(jsonArrayAgg)) {
-        sqlStr += ` ${parseJsonArrayAgg(jsonArrayAgg as JsonArrayAgg<T>[])} `
+        const { sql: jsonArrayAggSql, params: jsonArrayAggParams } = parseJsonArrayAgg(jsonArrayAgg as JsonArrayAgg<T>[]);
+        params.push(...jsonArrayAggParams);
+        sqlStr += ` ${jsonArrayAggSql} `
     }
 
     const specsSql = [];

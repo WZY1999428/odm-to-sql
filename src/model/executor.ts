@@ -324,7 +324,6 @@ class Executor {
         if (typeof this.schema.hooks.beforeAggregate === "function") {
             options = await this.schema.hooks.beforeAggregate(options) || options;
         }
-
         const { sql, params } = parseAggregate(this.table, options);
         const finalSql = `SELECT ${sql}`;
         const result = await this.execute(finalSql, params);
