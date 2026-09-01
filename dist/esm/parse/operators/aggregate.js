@@ -21,4 +21,3 @@ exports.JoinTypeMap = {
     full: 'FULL JOIN',
     self: 'self'
 };
-//# sourceMappingURL=aggregate.js.map

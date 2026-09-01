@@ -31,4 +31,3 @@ function parseCase(caseStmt) {
     }
     return `CASE ${whenClauses.join(' ')} END`;
 }
-//# sourceMappingURL=parseCase.js.map

@@ -15,4 +15,3 @@ function parseOrder(order) {
         return '';
     return `ORDER BY ${orderSql.join(', ')}`;
 }
-//# sourceMappingURL=parseOrder.js.map

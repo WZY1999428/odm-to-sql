@@ -48,5 +48,12 @@ type User = {
     })
     console.log(result)
 
+    user.withTransaction(async (executor) => {
+        const result = await executor.find({ age: { $gt: 18 } });
+        const upd = await executor.update({ age: 25 }, { age: 18 });
+        console.log(result);
+        console.log(upd);
+    });
+
 
 })()

@@ -125,4 +125,3 @@ function throwError(msg) {
     error.name = "QueryValidationError";
     throw error;
 }
-//# sourceMappingURL=parseQuery.js.map

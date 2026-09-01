@@ -12,4 +12,3 @@ const parseUpdate_js_1 = __importDefault(require("./parseUpdate.js"));
 exports.parseUpdate = parseUpdate_js_1.default;
 const parseAggregate_js_1 = __importDefault(require("./parseAggregate.js"));
 exports.parseAggregate = parseAggregate_js_1.default;
-//# sourceMappingURL=index.js.map

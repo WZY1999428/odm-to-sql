@@ -7,4 +7,3 @@ var conditional_js_1 = require("./conditional.js");
 Object.defineProperty(exports, "QueryOperatorMap", { enumerable: true, get: function () { return conditional_js_1.QueryOperatorMap; } });
 var updateAtomic_js_1 = require("./updateAtomic.js");
 Object.defineProperty(exports, "UpdateAtomicMap", { enumerable: true, get: function () { return updateAtomic_js_1.UpdateAtomicMap; } });
-//# sourceMappingURL=index.js.map

@@ -17,4 +17,3 @@ function jsRegexToMySQL(jsRegex) {
     // 5. 其他字符保持原样（如 . * + ? {} [] ()）
     return s;
 }
-//# sourceMappingURL=regex.js.map
