@@ -4,12 +4,12 @@
   "description": "High-performance, lightweight MySQL ODM with <1μs parsing speed and advanced aggregation support.",
   "exports": {
     ".": {
-      "types": "./dist/types/index.d.ts",
+      "types": "./types/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
     },
     "./schema": {
-      "types": "./dist/types/schema/index.d.ts",
+      "types": "./types/schema/index.d.ts",
       "import": "./dist/esm/schema/index.js",
       "require": "./dist/cjs/schema/index.js"
     }

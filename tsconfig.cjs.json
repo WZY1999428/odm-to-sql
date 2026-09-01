@@ -4,7 +4,7 @@
     "declaration": true,
     "declarationMap": true,
     "rootDir": "./src",
-    "declarationDir": "./dist/types",
+    "declarationDir": "./types",
     "module": "CommonJS",
     "outDir": "./dist/cjs"
   }
