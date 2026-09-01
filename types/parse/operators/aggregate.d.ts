@@ -53,10 +53,11 @@ interface SelfJoin {
     type: 'self';
     as: string;
 }
+export type JsonArrayAggFields = Record<string, string> | string;
 export type JsonArrayAgg<T> = {
     as: string;
     case?: Case<T>;
-    fields: Record<string, string>[] | string;
+    fields: JsonArrayAggFields;
 };
 type Join = NormalJoin | SelfJoin;
 export type AggregationOptions<T> = {
@@ -64,7 +65,7 @@ export type AggregationOptions<T> = {
     jsonArrayAgg?: (JsonArrayAgg<T> | string)[];
     specs?: AggregateFields<T>;
     query?: Query<T>;
-    group?: (keyof T)[];
+    group?: string[];
     having?: Query<T>;
     sort?: OrderBy<T>;
     joins?: Join[];

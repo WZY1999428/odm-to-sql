@@ -40,7 +40,6 @@ export type AggregateFields<T> = {
     $count?: OneOrMany<Partial<{ field: keyof T | '*'; as: string; from: string; where: Query<unknown> }> | keyof T | '*'>;
 }
 
-
 type ColumnFields<T> = keyof T | string;
 
 /** inner 内连接  left 左连接  right 右连接  full 全连接 self 自连接 */

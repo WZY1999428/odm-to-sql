@@ -10,7 +10,7 @@ export declare enum CaseMode {
 }
 export type Case<V> = {
     $whens: When<V>[];
-    $else: Else;
+    $else?: Else;
     mode?: CaseMode;
 };
 //# sourceMappingURL=case.d.ts.map

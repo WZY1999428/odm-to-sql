@@ -24,7 +24,9 @@ function parseAggregate(table, options) {
         sqlStr += ` * `;
     }
     if (Array.isArray(jsonArrayAgg)) {
-        sqlStr += ` ${(0, parseJsonArrayAgg_js_1.default)(jsonArrayAgg)} `;
+        const { sql: jsonArrayAggSql, params: jsonArrayAggParams } = (0, parseJsonArrayAgg_js_1.default)(jsonArrayAgg);
+        params.push(...jsonArrayAggParams);
+        sqlStr += ` ${jsonArrayAggSql} `;
     }
     const specsSql = [];
     if (specs) {

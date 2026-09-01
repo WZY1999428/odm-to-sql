@@ -45,11 +45,11 @@ function parseQuery(query) {
                 }
                 continue;
             }
-            if (key.includes('.')) {
-                const [column, ...path] = key.split('.');
-                const jsonPath = `$.${path.join('.')}`;
-                key = `${column}->>'${jsonPath}'`;
-            }
+            // if (key.includes('.')) {
+            //     const [column, ...path] = key.split('.');
+            //     const jsonPath = `$.${path.join('.')}`;
+            //     key = `${column}->>'${jsonPath}'` as keyof Query<T>;
+            // }
             // 2. 处理普通字段
             if (value && typeof value === 'object' && !Array.isArray(value)) {
                 const keys = Object.keys(value);
@@ -94,9 +94,20 @@ function parseQuery(query) {
                             if (val && typeof val !== "string" && typeof val !== 'number') {
                                 throwError(`"${op}" at "${key}" only accepts string or number values. Received: ${typeof val}`);
                             }
+                            console.log(op, val, value);
                             const sqlOp = index_js_1.QueryOperatorMap[op];
-                            segments.push(`${key} ${sqlOp} ?`);
-                            params.push(value[op]);
+                            if ((val === null || val === undefined) && ["$eq", "$ne"].includes(op)) {
+                                if (op == "$eq") {
+                                    segments.push(`${key} IS NULL`);
+                                }
+                                else {
+                                    segments.push(`${key} IS NOT NULL`);
+                                }
+                            }
+                            else {
+                                segments.push(`${key} ${sqlOp} ?`);
+                                params.push(val);
+                            }
                         }
                     }
                     else if (typeof val === 'object') {
