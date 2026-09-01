@@ -32,7 +32,7 @@ export default function parseCase<T>(caseStmt: Case<T>): { sql: string; params: 
     if ($else && whenClauses.length > 0) {
         whenClauses.push(`ELSE ${quote($else as string)}`);
     } else {
-        whenClauses.push(`ELSE JSON_ARRAY()`);
+        whenClauses.push(`ELSE NULL`);
     }
 
     return { sql: `CASE ${whenClauses.join(' ')} END`, params };

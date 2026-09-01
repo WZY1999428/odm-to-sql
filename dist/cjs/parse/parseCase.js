@@ -37,7 +37,7 @@ function parseCase(caseStmt) {
         whenClauses.push(`ELSE ${(0, index_js_1.quote)($else)}`);
     }
     else {
-        whenClauses.push(`ELSE JSON_ARRAY()`);
+        whenClauses.push(`ELSE NULL`);
     }
     return { sql: `CASE ${whenClauses.join(' ')} END`, params };
 }
