@@ -57,27 +57,27 @@ type Route = {
             "menus.isLink",
             "menus.enabled",
         ],
-        jsonArrayAgg: [
-            {
-                as: "buttons",
-                fields: {
-                    "id": "menuButtons.id",
-                    "name": "menuButtons.name",
-                    "sort": "menuButtons.sort",
-                    "enabled": "menuButtons.enabled",
-                },
-                case: {
-                    $whens: [
-                        { when: { "menuButtons.id": { $ne: null } } } as any
-                    ],
-                }
-            }
-        ],
         joins: [{
-            table: "menu_buttons",
+            table: "menu_permissions",
             type: "left",
             as: "menuButtons",
-            on: { "menuButtons.menuId": "menus.id" }
+            on: { "menuButtons.menuId": "menus.id" },
+            jsonArrayAgg: [
+                {
+                    as: "buttons",
+                    fields: {
+                        "id": "menuButtons.id",
+                        "name": "menuButtons.name",
+                        "sort": "menuButtons.sort",
+                        "enabled": "menuButtons.enabled",
+                    },
+                    case: {
+                        $whens: [
+                            { when: { "menuButtons.id": { $ne: null } } } as any
+                        ],
+                    }
+                }
+            ],
 
         }],
         group: ["menus.id"],

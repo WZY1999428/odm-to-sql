@@ -55,16 +55,18 @@ export const JoinTypeMap = {
 }
 
 // 1. 定义基础的普通 Join
-interface NormalJoin {
+interface NormalJoin<T> {
     table: string;
+    jsonArrayAgg?: (JsonArrayAgg<T> | string)[];
     on: Record<string, string>; // 必填
     type?: JoinType;
     as?: string;
 }
 
 // 2. 定义特殊的 Self Join
-interface SelfJoin {
+interface SelfJoin<T> {
     table: string;
+    jsonArrayAgg?: (JsonArrayAgg<T> | string)[];
     on?: Record<string, string>; // 可选
     type: 'self'; // 必须显式指定为 'self'
     as: string;   // 自连接必须有别名，否则字段全冲突
@@ -75,23 +77,24 @@ interface SelfJoin {
 
 export type JsonArrayAggFields = Record<string, string> | string
 
+
 export type JsonArrayAgg<T> = {
     as: string,
     case?: Case<T>,
+    if?: boolean,
     fields: JsonArrayAggFields
 }
 
-type Join = NormalJoin | SelfJoin;
+type Join<T> = NormalJoin<T> | SelfJoin<T>;
 
 export type AggregationOptions<T> = {
     fields: ColumnFields<T>[];      // 支持 ['u.id', 'p.title']
-    jsonArrayAgg?: (JsonArrayAgg<T> | string)[];
     specs?: AggregateFields<T>;      // 选填：你要聚合哪些字段？
     query?: Query<T>;              // 选填：过滤条件 (WHERE)
     group?: string[];         // 选填：按什么分组？
     having?: Query<T>;             // 选填：分组后的过滤 (HAVING)
     sort?: OrderBy<T>; // 排序
-    joins?: Join[];              // 连表
+    joins?: Join<T>[];              // 连表
     limit?: number;
     offset?: number
 }

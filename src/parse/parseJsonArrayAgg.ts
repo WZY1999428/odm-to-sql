@@ -6,6 +6,7 @@ import type { JsonArrayAgg, JsonArrayAggFields } from "./operators/aggregate.js"
 export default function parseJsonArrayAgg<T>(jsonArrayAgg: JsonArrayAgg<T>[]): { sql: string; params: any[] } {
     let sqlStr = "";
     let params: any[] = [];
+    let seleceSql: string = "";
     for (const item of jsonArrayAgg) {
 
         if (typeof item === "string") {
@@ -43,9 +44,12 @@ export default function parseJsonArrayAgg<T>(jsonArrayAgg: JsonArrayAgg<T>[]): {
                 }
             }
 
+
+            console.log(expression);
+
             if (expression) {
                 sqlStr += `, ${expression}`;
-
+                    
                 if (as) {
                     sqlStr += ` AS ${quote(as)}`;
                 }
