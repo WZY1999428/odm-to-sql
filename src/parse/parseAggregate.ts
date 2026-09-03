@@ -8,23 +8,24 @@ import {
     AggregationOptions, AggregateOption, OneOrMany
 } from "./operators/index.js"
 export default function parseAggregate<T>(table: string, options: AggregationOptions<T>): { sql: string, params: any } {
+
     let sqlStr: string = ""
+    let sleectSqlStr: string = "";
+    let specsSqlStr: string = "";
+    let joinsSqlStr: string = "";
+
     const params: any[] = []
-    const { fields, specs, query, group, having, sort, joins, limit, offset, jsonArrayAgg } = options;
+    const { fields, specs, query, group, having, sort, joins, limit, offset } = options;
     if (Array.isArray(fields)) {
         if (!isStringArray(fields)) {
             throw new Error("fields must be string array");
         }
-        sqlStr += ` ${fields.join(', ')}  `
+        sleectSqlStr += ` ${fields.join(', ')}  `
     } else {
-        sqlStr += ` * `
+        sleectSqlStr += ` * `
     }
 
-    if (Array.isArray(jsonArrayAgg)) {
-        const { sql: jsonArrayAggSql, params: jsonArrayAggParams } = parseJsonArrayAgg(jsonArrayAgg as JsonArrayAgg<T>[]);
-        params.push(...jsonArrayAggParams);
-        sqlStr += ` ${jsonArrayAggSql} `
-    }
+
 
     const specsSql = [];
     if (specs) {
@@ -42,7 +43,7 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
 
         if (specs.$count) specsSql.push(joinSpec<T>("COUNT", specs.$count, params));
     }
-    sqlStr += `${specsSql.join(", ")}FROM ${quote(table)} `
+    specsSqlStr += `${specsSql.join(", ")}FROM ${quote(table)} `
 
 
     if (joins) {
@@ -57,11 +58,20 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
             if (!item.table) {
                 throw new Error("table is required");
             }
+
             if (!isObject(item.on) && item.type != 'self') {
                 throw new Error("on is required");
             }
             // 1. 生成别名：优先用用户的，没有就自增
             const tableAlias = item.as || `t${asIndex++}`;
+
+
+
+            if (Array.isArray(item.jsonArrayAgg)) {
+                const { sql: jsonArrayAggSql, params: jsonArrayAggParams } = parseJsonArrayAgg(item.jsonArrayAgg as JsonArrayAgg<T>[]);
+                params.push(...jsonArrayAggParams);
+                sleectSqlStr += ` ${jsonArrayAggSql} `
+            }
 
             // 2. 解析 ON 条件 (这里的 value 以后记得接 $ref 逻辑)
             let onStr = "";
@@ -83,7 +93,7 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
 
         // 4. 组装到主 SQL
         // 注意：JOIN 是紧跟在 FROM table 之后的
-        sqlStr += ` ${joinsSql}`;
+        joinsSqlStr += ` ${joinsSql}`;
 
     }
 
