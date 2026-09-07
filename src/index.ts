@@ -28,28 +28,31 @@ class MySqlODM {
         }
         schema.table = table;
         const model = new Model<T>(table, schema, this.conn!);
-        const fields = await model.execute(`SHOW COLUMNS FROM ${table}`, []);
-        const notFields = [];
-        for (const key in schema.fields) {
-            if (!(fields as any[]).some((item: any) => item.Field === key)) {
-                notFields.push(key);
-            }
-        }
-        if (notFields.length > 0) {
-            // TODO: 创建缺失的字段
-            for (const fieldName of notFields) {
-                const uniqueGroupMap = new Map();
-                const indexs = new Set<string>();
-                const config = schema.fields[fieldName];
-                const { definition, alterTable } = schema.parseFields(fieldName, config, uniqueGroupMap, indexs);
-                const sql = `ALTER TABLE \`${table}\` ADD COLUMN ${definition};`;
-                await model.execute(sql, []);
-                if (alterTable) {
-                    await model.execute(alterTable, []);
+        await model.execute(`SHOW COLUMNS FROM ${table}`, []).then(async fields => {
+            const notFields = [];
+            for (const key in schema.fields) {
+                if (!(fields as any[]).some((item: any) => item.Field === key)) {
+                    notFields.push(key);
                 }
             }
-            console.warn(`已自动添加新增字段: ${notFields.join(', ')}`);
-        }
+            if (notFields.length > 0) {
+                // TODO: 创建缺失的字段
+                for (const fieldName of notFields) {
+                    const uniqueGroupMap = new Map();
+                    const indexs = new Set<string>();
+                    const config = schema.fields[fieldName];
+                    const { definition, alterTable } = schema.parseFields(fieldName, config, uniqueGroupMap, indexs);
+                    const sql = `ALTER TABLE \`${table}\` ADD COLUMN ${definition};`;
+                    await model.execute(sql, []);
+                    if (alterTable) {
+                        await model.execute(alterTable, []);
+                    }
+                }
+                console.warn(`已自动添加新增字段: ${notFields.join(', ')}`);
+            }
+        }).catch(err => { })
+
+
 
 
 
