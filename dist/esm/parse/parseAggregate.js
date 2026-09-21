@@ -1,88 +1,51 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = parseAggregate;
-exports.isAggregateOption = isAggregateOption;
-const index_js_1 = require("../utils/index.js");
-const parseQuery_js_1 = __importDefault(require("./parseQuery.js"));
-const parseOrder_js_1 = __importDefault(require("./parseOrder.js"));
-const aggregate_js_1 = require("./operators/aggregate.js");
-const parseJsonArrayAgg_js_1 = __importDefault(require("./parseJsonArrayAgg.js"));
-function parseAggregate(table, options) {
+import { isObject, isStringArray, quote } from "../utils/index.js";
+import parseQuery from "./parseQuery.js";
+import parseOrder from "./parseOrder.js";
+import parseJsonArrayAgg from "./parseJsonArrayAgg.js";
+import parseJoin from "./parseJoin.js";
+export default function parseAggregate(table, options) {
     let sqlStr = "";
     const params = [];
     const { fields, specs, query, group, having, sort, joins, limit, offset, jsonArrayAgg } = options;
     if (Array.isArray(fields)) {
-        if (!(0, index_js_1.isStringArray)(fields)) {
+        if (!isStringArray(fields)) {
             throw new Error("fields must be string array");
         }
-        sqlStr += ` ${fields.join(', ')}  `;
+        sqlStr += ` ${fields.join(',')}`;
     }
     else {
         sqlStr += ` * `;
     }
     if (Array.isArray(jsonArrayAgg)) {
-        sqlStr += ` ${(0, parseJsonArrayAgg_js_1.default)(jsonArrayAgg)} `;
+        sqlStr += ` ${parseJsonArrayAgg(jsonArrayAgg)} `;
     }
-    const specsSql = [];
-    if (specs) {
-        if (!(0, index_js_1.isObject)(specs)) {
-            throw new Error("specs must be object");
+    if (specs && Array.isArray(specs)) {
+        const specsSql = [];
+        for (const spec of specs) {
+            if (!isObject(spec)) {
+                throw new Error("each spec must be object");
+            }
+            if (spec.$max)
+                specsSql.push(joinSpec("MAX", spec.$max, params));
+            if (spec.$min)
+                specsSql.push(joinSpec("MIN", spec.$min, params));
+            if (spec.$sum)
+                specsSql.push(joinSpec("SUM", spec.$sum, params));
+            if (spec.$avg)
+                specsSql.push(joinSpec("AVG", spec.$avg, params));
+            if (spec.$count)
+                specsSql.push(joinSpec("COUNT", spec.$count, params));
         }
-        if (specs.$max)
-            specsSql.push(joinSpec("MAX", specs.$max, params));
-        if (specs.$min)
-            specsSql.push(joinSpec("MIN", specs.$min, params));
-        if (specs.$sum)
-            specsSql.push(joinSpec("SUM", specs.$sum, params));
-        if (specs.$avg)
-            specsSql.push(joinSpec("AVG", specs.$avg, params));
-        if (specs.$count)
-            specsSql.push(joinSpec("COUNT", specs.$count, params));
+        sqlStr += `, ${specsSql.join(", ")}FROM ${quote(table)} `;
     }
-    sqlStr += `${specsSql.join(", ")}FROM ${(0, index_js_1.quote)(table)} `;
     if (joins) {
-        if (!Array.isArray) {
-            throw new Error("joins must be array");
-        }
-        let asIndex = 0;
-        const joinsSql = joins.map(item => {
-            if (!(0, index_js_1.isObject)(item)) {
-                throw new Error("joins must be array of object");
-            }
-            if (!item.table) {
-                throw new Error("table is required");
-            }
-            if (!(0, index_js_1.isObject)(item.on) && item.type != 'self') {
-                throw new Error("on is required");
-            }
-            // 1. 生成别名：优先用用户的，没有就自增
-            const tableAlias = item.as || `t${asIndex++}`;
-            // 2. 解析 ON 条件 (这里的 value 以后记得接 $ref 逻辑)
-            let onStr = "";
-            if (item.on) {
-                onStr = Object.entries(item.on).map(([key, value]) => {
-                    return `${(0, index_js_1.quote)(key)} = ${(0, index_js_1.quote)(value)}`;
-                }).join(" AND ");
-            }
-            const joinOn = onStr ? ` ON ${onStr}` : "";
-            // 3. 根据类型生成 SQL
-            if (item.type === 'self') {
-                return ` INNER JOIN ${(0, index_js_1.quote)(item.table)} AS ${(0, index_js_1.quote)(tableAlias)}${joinOn}`;
-            }
-            else {
-                const joinType = aggregate_js_1.JoinTypeMap[item.type || 'inner']; // 默认 inner
-                return ` ${joinType} ${(0, index_js_1.quote)(item.table)} AS ${(0, index_js_1.quote)(tableAlias)}${joinOn}`;
-            }
-        }).join(" ");
+        const joinsSql = parseJoin(joins);
         // 4. 组装到主 SQL
         // 注意：JOIN 是紧跟在 FROM table 之后的
         sqlStr += ` ${joinsSql}`;
     }
     if (query && Object.keys(query).length) {
-        const { sql: sqlQuery, params: paramsQuery } = (0, parseQuery_js_1.default)(query);
+        const { sql: sqlQuery, params: paramsQuery } = parseQuery(query);
         sqlStr += ` WHERE ${sqlQuery}`;
         params.push(...paramsQuery);
     }
@@ -90,12 +53,12 @@ function parseAggregate(table, options) {
         sqlStr += ` GROUP BY ${group.join(', ')}`;
     }
     if (having && Object.keys(having).length) {
-        const { sql: sqlQuery, params: paramsQuery } = (0, parseQuery_js_1.default)(having);
+        const { sql: sqlQuery, params: paramsQuery } = parseQuery(having);
         sqlStr += ` HAVING ${sqlQuery}`;
         params.push(...paramsQuery);
     }
     if (sort && sort.length) {
-        sqlStr += ` ${(0, parseOrder_js_1.default)(sort)}`;
+        sqlStr += ` ${parseOrder(sort)}`;
     }
     if (isFinite(limit)) {
         sqlStr += ` LIMIT ${limit}`;
@@ -117,16 +80,16 @@ function joinSpec(type, spec, params) {
             let str = "";
             let where = "";
             if (spec.where && Object.keys(spec.where).length) {
-                const { sql, params: paramsWhere } = (0, parseQuery_js_1.default)(spec.where);
+                const { sql, params: paramsWhere } = parseQuery(spec.where);
                 where = ` WHERE ${sql} `;
                 params.push(...paramsWhere);
             }
             if (spec.from)
-                str += `( SELECT ${type}(${spec.field}) FROM ${(0, index_js_1.quote)(spec.from)}${where}) `;
+                str += `( SELECT ${type}(${spec.field}) FROM ${quote(spec.from)}${where}) `;
             else
                 str += ` ${type}(${spec.field}) `;
             if (spec.as)
-                str += `AS ${(0, index_js_1.quote)(spec.as)} `;
+                str += `AS ${quote(spec.as)} `;
             else
                 str += `AS ${type.toLocaleLowerCase()}_${spec.field} `;
             return str;
@@ -144,6 +107,6 @@ function joinSpec(type, spec, params) {
     }
     return parse(spec);
 }
-function isAggregateOption(value) {
+export function isAggregateOption(value) {
     return value !== null && typeof value === "object" && !Array.isArray(value);
 }

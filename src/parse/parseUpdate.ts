@@ -51,10 +51,12 @@ export default function parseUpdate<T>(data: Update<T>, schema: Schema<T>): { sq
             throw new Error(`Field ${operator} not found in schema`);
         }
         setSql.push(`${parseJson(operator)} = ?`);
-        if (typeof value === "object") {
+        if (typeof value === "object" && value != null) {
             params.push(JSON.stringify(value));
-        } else {
-            params.push(value);
+        }
+        else {
+            if (value === undefined || value === "") params.push(null);
+            else params.push(value);
         }
     }
 

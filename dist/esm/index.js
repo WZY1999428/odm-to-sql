@@ -1,11 +1,6 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const client_js_1 = __importDefault(require("./client.js"));
-const index_js_1 = require("./schema/index.js");
-const index_js_2 = __importDefault(require("./model/index.js"));
+import Client from "./client.js";
+import { Schema } from "./schema/index.js";
+import Model from "./model/index.js";
 class MySqlODM {
     models;
     conn = null;
@@ -15,19 +10,19 @@ class MySqlODM {
     }
     async use(options, type = 'pool') {
         this.conn = type === 'connection'
-            ? await client_js_1.default.connection(options)
-            : await client_js_1.default.connectionPool(options);
+            ? await Client.connection(options)
+            : await Client.connectionPool(options);
     }
     async model(table, schema) {
         if (!this.conn)
             throw new Error("Database not connected");
         if (this.models.has(table))
             return this.models.get(table);
-        if (!(schema instanceof index_js_1.Schema)) {
+        if (!(schema instanceof Schema)) {
             throw new Error("schema must be an instance of Schema");
         }
         schema.table = table;
-        const model = new index_js_2.default(table, schema, this.conn);
+        const model = new Model(table, schema, this.conn);
         const fields = await model.execute(`SHOW COLUMNS FROM ${table}`, []);
         const notFields = [];
         for (const key in schema.fields) {
@@ -51,7 +46,7 @@ class MySqlODM {
             console.warn(`已自动添加新增字段: ${notFields.join(', ')}`);
         }
         this.models.set(table, model);
-        return this.models.get(table);
+        return model;
     }
     buildColumnSQL(name, field) {
         let sql = `\`${name}\` ${field.type}`;
@@ -70,4 +65,4 @@ class MySqlODM {
         return this.models.keys();
     }
 }
-exports.default = MySqlODM;
+export default MySqlODM;

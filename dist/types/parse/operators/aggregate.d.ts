@@ -58,11 +58,11 @@ export type JsonArrayAgg<T> = {
     case?: Case<T>;
     fields: Record<string, string>[] | string;
 };
-type Join = NormalJoin | SelfJoin;
+export type Join = NormalJoin | SelfJoin;
 export type AggregationOptions<T> = {
     fields: ColumnFields<T>[];
     jsonArrayAgg?: (JsonArrayAgg<T> | string)[];
-    specs?: AggregateFields<T>;
+    specs?: AggregateFields<T>[];
     query?: Query<T>;
     group?: (keyof T)[];
     having?: Query<T>;

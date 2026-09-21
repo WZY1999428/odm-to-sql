@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = jsRegexToMySQL;
-function jsRegexToMySQL(jsRegex) {
+export default function jsRegexToMySQL(jsRegex) {
     let s = jsRegex.source;
     // 1. 替换常用快捷字符
     s = s.replace(/\\d/g, '[0-9]');

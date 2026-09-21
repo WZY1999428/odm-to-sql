@@ -1,4 +1,3 @@
-"use strict";
 /*
         操作符	描述	示例
         $eq	等于	{ age: { $eq: 25 } }
@@ -13,9 +12,7 @@
         $nlike	不包含	{ name: { $nlike: "John" } }
         $between 在指定范围内	{ age: { $between: [20, 30] } }
 */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.QueryOperatorMap = void 0;
-exports.QueryOperatorMap = {
+export const QueryOperatorMap = {
     '$eq': "=",
     '$ne': "!=",
     '$gt': ">",

@@ -1,8 +1,7 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const index_js_1 = require("../parse/index.js");
-const index_js_2 = require("../schema/index.js");
-const index_js_3 = require("../utils/index.js");
+import { parseOrder, parseQuery, parseUpdate, parseAggregate } from "../parse/index.js";
+import { DataType } from "../schema/index.js";
+import { quote } from "../utils/index.js";
+import parseJoin from "../parse/parseJoin.js";
 class Executor {
     client;
     table;
@@ -18,7 +17,7 @@ class Executor {
         if (fields === "*")
             return "*";
         if (Array.isArray(fields)) {
-            return fields.map(f => (0, index_js_3.quote)(f)).join(', ');
+            return fields.map(f => quote(f)).join(', ');
         }
         return fields; // 如果是字符串且不是 *，建议也处理下或者直接透传
     }
@@ -78,41 +77,70 @@ class Executor {
             query = await this.schema.hooks.beforeFind(query) || query;
         }
         const { fields = "*", sort = {} } = options;
-        const { sql, params } = (0, index_js_1.parseQuery)(query);
-        let joinSql = `SELECT ${this.buildFields(fields)} FROM ${(0, index_js_3.quote)(this.table)}`;
+        const { sql, params } = parseQuery(query);
+        let joinSql = `SELECT ${this.buildFields(fields)} FROM ${quote(this.table)}`;
         if (sql)
             joinSql += ` WHERE ${sql} `;
-        joinSql += ` ${(0, index_js_1.parseOrder)(sort)} LIMIT 1`;
+        joinSql += ` ${parseOrder(sort)} LIMIT 1`;
         const result = await this.execute(joinSql, params);
+        console.log(joinSql, params);
         if (typeof this.schema.hooks.afterFind === "function") {
             return await this.schema.hooks.afterFind(result[0]);
         }
         return result[0];
     }
-    async count(query) {
+    async count(options) {
+        const { sql, params } = this.buildMathSql('COUNT', options);
+        const result = await this.execute(sql, params);
+        return Number(result?.[0]?.total || 0);
+    }
+    async sum(options) {
+        const { sql, params } = this.buildMathSql('SUM', options);
+        const result = await this.execute(sql, params);
+        return Number(result?.[0]?.total || 0);
+    }
+    async avg(options) {
+        const { sql, params } = this.buildMathSql('AVG', options);
+        const result = await this.execute(sql, params);
+        return Number(result?.[0]?.total || 0);
+    }
+    async max(options) {
+        const { sql, params } = this.buildMathSql('MAX', options);
+        const result = await this.execute(sql, params);
+        return Number(result?.[0]?.total || 0);
+    }
+    async min(options) {
+        const { sql, params } = this.buildMathSql('MIN', options);
+        const result = await this.execute(sql, params);
+        return Number(result?.[0]?.total || 0);
+    }
+    buildMathSql(mathType, options) {
         let sqlWhere = "";
         let paramsWhere = [];
-        if (query && Object.keys(query).length) {
-            const { sql, params } = (0, index_js_1.parseQuery)(query);
+        const { field = '*', joins = [] } = options;
+        if (options.query && Object.keys(options.query).length) {
+            const { sql, params } = parseQuery(options.query);
             sqlWhere = sql;
             paramsWhere = params;
         }
-        let joinSql = `SELECT COUNT(*) AS total FROM ${(0, index_js_3.quote)(this.table)}`;
+        const expr = mathType === 'COUNT' && !options.field ? '*' : quote(field);
+        let sql = `SELECT ${mathType}(${expr}) AS total FROM ${quote(this.table)}`;
+        if (joins.length)
+            sql += ` ${parseJoin(joins)}`;
         if (sqlWhere)
-            joinSql += ` WHERE ${sqlWhere} `;
-        const result = await this.execute(joinSql, paramsWhere);
-        return Number(result?.[0]?.total || 0);
+            sql += ` WHERE ${sqlWhere}`;
+        return { sql, params: paramsWhere };
     }
     async findMany(query, options = {}) {
         if (typeof this.schema.hooks.beforeFind === "function") {
             query = await this.schema.hooks.beforeFind(query) || query;
         }
-        const { sql, params } = (0, index_js_1.parseQuery)(query);
+        const { sql, params } = parseQuery(query);
         const { limit = 0, offset = 0, fields = "*", sort = {} } = options;
-        let joinSql = `SELECT ${this.buildFields(fields)} FROM ${(0, index_js_3.quote)(this.table)}`;
+        let joinSql = `SELECT ${this.buildFields(fields)} FROM ${quote(this.table)}`;
         if (sql)
             joinSql += ` WHERE ${sql} `;
-        joinSql += ` ${(0, index_js_1.parseOrder)(sort)} ${this.buildLimit(limit, offset)} `;
+        joinSql += ` ${parseOrder(sort)} ${this.buildLimit(limit, offset)} `;
         const results = await this.execute(joinSql, params);
         if (typeof this.schema.hooks.afterFind === "function") {
             return this.schema.hooks.afterFind(results);
@@ -127,31 +155,34 @@ class Executor {
             if (!fieldType)
                 continue;
             const value = data[key];
-            const quotedKey = (0, index_js_3.quote)(key);
+            const quotedKey = quote(key);
             fields.push(quotedKey);
-            if (fieldType === index_js_2.DataType.Json && typeof value === "object" && value != null) {
+            if (fieldType === DataType.Json && typeof value === "object" && value != null) {
                 params.push(JSON.stringify(value));
             }
             else {
-                params.push(value);
+                if (value === undefined || value === "" || value === null)
+                    params.push(null);
+                else
+                    params.push(value);
             }
         }
         return { fields, params };
     }
-    async insert(data, opt = {}) {
+    async insertOne(data, opt = {}) {
         if (typeof this.schema.hooks.beforeInsert === "function") {
             data = await this.schema.hooks.beforeInsert(data) || data;
         }
         const { ignore = false, upsert = false } = opt;
         const { fields: insertFields, params } = this.prepareFields(data);
-        let sql = `INSERT ${ignore ? 'IGNORE' : ''} INTO ${(0, index_js_3.quote)(this.table)} (${insertFields.join(', ')}) VALUES (${params.map(() => '?').join(', ')})`;
+        let sql = `INSERT ${ignore ? 'IGNORE' : ''} INTO ${quote(this.table)} (${insertFields.join(', ')}) VALUES (${params.map(() => '?').join(', ')})`;
         // 处理 UPSERT 逻辑
         if (upsert) {
             const updateFields = Array.isArray(upsert)
                 ? upsert
                 : Object.keys(data).filter(k => this.schema.fieldsMap.has(k));
             const updateSql = updateFields
-                .map(f => `${(0, index_js_3.quote)(f)} = VALUES(${(0, index_js_3.quote)(f)})`)
+                .map(f => `${quote(f)} = VALUES(${quote(f)})`)
                 .join(', ');
             sql += ` ON DUPLICATE KEY UPDATE ${updateSql}`;
         }
@@ -175,7 +206,7 @@ class Executor {
             batch.push(data);
         }
         const columns = Object.keys(data[0]);
-        const quotedColumns = columns.filter(c => this.schema.fieldsMap.has(c)).map(c => (0, index_js_3.quote)(c)).join(', ');
+        const quotedColumns = columns.filter(c => this.schema.fieldsMap.has(c)).map(c => quote(c)).join(', ');
         const results = {
             fieldCount: 0,
             affectedRows: 0,
@@ -193,13 +224,13 @@ class Executor {
                 const valuesSql = batchData.map(() => placeholders).join(', ');
                 // 3. 展平所有数据为一个一维数组 [val1, val2, val3, val4...]
                 const params = batchData.flatMap(item => columns.map(col => item[col]));
-                let sql = `INSERT ${ignore ? 'IGNORE' : ''} INTO ${(0, index_js_3.quote)(this.table)} (${quotedColumns}) VALUES ${valuesSql}`;
+                let sql = `INSERT ${ignore ? 'IGNORE' : ''} INTO ${quote(this.table)} (${quotedColumns}) VALUES ${valuesSql}`;
                 if (upsert) {
                     const updateFields = Array.isArray(upsert)
                         ? upsert
                         : Object.keys(data).filter(k => this.schema.fieldsMap.has(k));
                     const updateSql = updateFields
-                        .map(f => `${(0, index_js_3.quote)(f)} = VALUES(${(0, index_js_3.quote)(f)})`)
+                        .map(f => `${quote(f)} = VALUES(${quote(f)})`)
                         .join(', ');
                     sql += ` ON DUPLICATE KEY UPDATE ${updateSql}`;
                 }
@@ -229,16 +260,16 @@ class Executor {
         }
         return results;
     }
-    async update(query, data) {
+    async updateOne(query, data) {
         if (typeof this.schema.hooks.beforeUpdate === "function") {
             const result = await this.schema.hooks.beforeUpdate(query, data) || [query, data];
             query = result[0];
             data = result[1];
         }
-        const { sql: whereSql, params: whereParams } = (0, index_js_1.parseQuery)(query);
-        const { sql: assignments, params: values } = (0, index_js_1.parseUpdate)(data, this.schema);
+        const { sql: whereSql, params: whereParams } = parseQuery(query);
+        const { sql: assignments, params: values } = parseUpdate(data, this.schema);
         const finalSql = `
-            UPDATE ${(0, index_js_3.quote)(this.table)}
+            UPDATE ${quote(this.table)}
             SET ${assignments} 
             WHERE ${whereSql} LIMIT 1
         `;
@@ -254,10 +285,10 @@ class Executor {
             query = result[0];
             data = result[1];
         }
-        const { sql: whereSql, params: whereParams } = (0, index_js_1.parseQuery)(query);
-        const { sql: assignments, params: values } = (0, index_js_1.parseUpdate)(data, this.schema);
+        const { sql: whereSql, params: whereParams } = parseQuery(query);
+        const { sql: assignments, params: values } = parseUpdate(data, this.schema);
         const finalSql = `
-            UPDATE ${(0, index_js_3.quote)(this.table)}
+            UPDATE ${quote(this.table)}
             SET ${assignments} 
             WHERE ${whereSql}
         `;
@@ -271,8 +302,8 @@ class Executor {
         if (typeof this.schema.hooks.beforeDelete === "function") {
             query = await this.schema.hooks.beforeDelete(query) || query;
         }
-        const { sql: whereSql, params: whereParams } = (0, index_js_1.parseQuery)(query);
-        const finalSql = `DELETE FROM ${(0, index_js_3.quote)(this.table)} WHERE ${whereSql} LIMIT 1`;
+        const { sql: whereSql, params: whereParams } = parseQuery(query);
+        const finalSql = `DELETE FROM ${quote(this.table)} WHERE ${whereSql} LIMIT 1`;
         const result = await this.execute(finalSql, whereParams);
         if (typeof this.schema.hooks.afterDelete === "function") {
             return await this.schema.hooks.afterDelete(result);
@@ -283,8 +314,8 @@ class Executor {
         if (typeof this.schema.hooks.beforeDelete === "function") {
             query = await this.schema.hooks.beforeDelete(query) || query;
         }
-        const { sql: whereSql, params: whereParams } = (0, index_js_1.parseQuery)(query);
-        const finalSql = `DELETE FROM ${(0, index_js_3.quote)(this.table)} WHERE ${whereSql}`;
+        const { sql: whereSql, params: whereParams } = parseQuery(query);
+        const finalSql = `DELETE FROM ${quote(this.table)} WHERE ${whereSql}`;
         const result = await this.execute(finalSql, whereParams);
         if (typeof this.schema.hooks.afterDelete === "function") {
             return await this.schema.hooks.afterDelete(result);
@@ -292,7 +323,7 @@ class Executor {
         return result;
     }
     async clear() {
-        const finalSql = `DELETE FROM ${(0, index_js_3.quote)(this.table)}`;
+        const finalSql = `DELETE FROM ${quote(this.table)}`;
         const result = await this.execute(finalSql, []);
         return result;
     }
@@ -300,8 +331,9 @@ class Executor {
         if (typeof this.schema.hooks.beforeAggregate === "function") {
             options = await this.schema.hooks.beforeAggregate(options) || options;
         }
-        const { sql, params } = (0, index_js_1.parseAggregate)(this.table, options);
+        const { sql, params } = parseAggregate(this.table, options);
         const finalSql = `SELECT ${sql}`;
+        console.log(finalSql, params);
         const result = await this.execute(finalSql, params);
         if (typeof this.schema.hooks.AFterAggregate === "function") {
             return await this.schema.hooks.AFterAggregate(result);
@@ -309,4 +341,4 @@ class Executor {
         return result;
     }
 }
-exports.default = Executor;
+export default Executor;

@@ -3,7 +3,7 @@ import type { QueryOperators } from "./conditional.js"
 import type { UpdateAtomic } from "./updateAtomic.js"
 import type {
     AggregateOps, PipelineStages, AggregationOptions, AggregateOption
-    , AggregateFields, OneOrMany ,
+    , AggregateFields, OneOrMany,
 } from "./aggregate.js"
 export { LogicalMap } from "./logical.js"
 export { QueryOperatorMap } from "./conditional.js"
@@ -11,11 +11,13 @@ export { UpdateAtomicMap } from "./updateAtomic.js"
 
 
 export type Query<T> = {
-    // 关键点：[P in keyof T & string]
     [P in keyof T & string]?: T[P] | Condition<T[P]>;
 } & {
     [K in Logical]?: K extends '$not' ? Query<T> : Query<T>[];
+} & {
+    [key: string]: any;
 };
+
 
 type ArithmeticOperator<T> = Partial<Record<keyof T, number>>;
 export type Update<T> = {
@@ -27,6 +29,8 @@ export type Update<T> = {
     $max?: Partial<T>;
     $min?: Partial<T>;
     $concat?: Partial<Record<keyof T, string>>;
+    $col?: Partial<Record<keyof T, string>>;
+    $json?: string;
 } & {
     [P in keyof T & string]?: T[P] | UpdateAtomic;
 }
@@ -40,7 +44,7 @@ type Condition<V> = QueryOperators<V> & {
     $like?: string;
     $nlike?: string;
 };
-
+export type mathType = 'SUM' | 'AVG' | 'MAX' | 'MIN' | 'COUNT';
 
 export type {
     Logical,

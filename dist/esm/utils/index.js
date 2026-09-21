@@ -1,17 +1,9 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.quote = quote;
-exports.quoteAll = quoteAll;
-exports.parseJson = parseJson;
-exports.isObject = isObject;
-exports.isStringArray = isStringArray;
-exports.parseObjectKeys = parseObjectKeys;
 /**
  * 为 SQL 标识符（表名、字段名）添加反引号
  * 支持格式: "name" -> "`name`"
  * 支持格式: "user.name" -> "`user`.`name`"
  */
-function quote(identifier) {
+export function quote(identifier) {
     // 如果是 * 则不处理
     if (!identifier || identifier === '*')
         return identifier;
@@ -26,10 +18,10 @@ function quote(identifier) {
 /**
  * 批量处理多个字段名
  */
-function quoteAll(identifiers) {
+export function quoteAll(identifiers) {
     return identifiers.map(quote).join(', ');
 }
-function parseJson(key) {
+export function parseJson(key) {
     if (key.includes('.')) {
         const [column, ...path] = key.split('.');
         // 转换成 MySQL 的 JSON 提取语法：column->>'$.path'
@@ -37,13 +29,13 @@ function parseJson(key) {
     }
     return `\`${key.replace(/`/g, '``')}\``;
 }
-function isObject(value) {
+export function isObject(value) {
     return (value != null && typeof value === "object" && !Array.isArray(value));
 }
-function isStringArray(value) {
+export function isStringArray(value) {
     return (Array.isArray(value) && value.every(item => typeof item === 'string'));
 }
-function parseObjectKeys(datas) {
+export function parseObjectKeys(datas) {
     if (!isObject(datas))
         return '';
     let parts = [];

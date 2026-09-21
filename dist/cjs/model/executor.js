@@ -1,8 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const index_js_1 = require("../parse/index.js");
 const index_js_2 = require("../schema/index.js");
 const index_js_3 = require("../utils/index.js");
+const parseJoin_js_1 = __importDefault(require("../parse/parseJoin.js"));
 class Executor {
     client;
     table;
@@ -84,24 +88,53 @@ class Executor {
             joinSql += ` WHERE ${sql} `;
         joinSql += ` ${(0, index_js_1.parseOrder)(sort)} LIMIT 1`;
         const result = await this.execute(joinSql, params);
+        console.log(joinSql, params);
         if (typeof this.schema.hooks.afterFind === "function") {
             return await this.schema.hooks.afterFind(result[0]);
         }
         return result[0];
     }
-    async count(query) {
+    async count(options) {
+        const { sql, params } = this.buildMathSql('COUNT', options);
+        const result = await this.execute(sql, params);
+        return Number(result?.[0]?.total || 0);
+    }
+    async sum(options) {
+        const { sql, params } = this.buildMathSql('SUM', options);
+        const result = await this.execute(sql, params);
+        return Number(result?.[0]?.total || 0);
+    }
+    async avg(options) {
+        const { sql, params } = this.buildMathSql('AVG', options);
+        const result = await this.execute(sql, params);
+        return Number(result?.[0]?.total || 0);
+    }
+    async max(options) {
+        const { sql, params } = this.buildMathSql('MAX', options);
+        const result = await this.execute(sql, params);
+        return Number(result?.[0]?.total || 0);
+    }
+    async min(options) {
+        const { sql, params } = this.buildMathSql('MIN', options);
+        const result = await this.execute(sql, params);
+        return Number(result?.[0]?.total || 0);
+    }
+    buildMathSql(mathType, options) {
         let sqlWhere = "";
         let paramsWhere = [];
-        if (query && Object.keys(query).length) {
-            const { sql, params } = (0, index_js_1.parseQuery)(query);
+        const { field = '*', joins = [] } = options;
+        if (options.query && Object.keys(options.query).length) {
+            const { sql, params } = (0, index_js_1.parseQuery)(options.query);
             sqlWhere = sql;
             paramsWhere = params;
         }
-        let joinSql = `SELECT COUNT(*) AS total FROM ${(0, index_js_3.quote)(this.table)}`;
+        const expr = mathType === 'COUNT' && !options.field ? '*' : (0, index_js_3.quote)(field);
+        let sql = `SELECT ${mathType}(${expr}) AS total FROM ${(0, index_js_3.quote)(this.table)}`;
+        if (joins.length)
+            sql += ` ${(0, parseJoin_js_1.default)(joins)}`;
         if (sqlWhere)
-            joinSql += ` WHERE ${sqlWhere} `;
-        const result = await this.execute(joinSql, paramsWhere);
-        return Number(result?.[0]?.total || 0);
+            sql += ` WHERE ${sqlWhere}`;
+        return { sql, params: paramsWhere };
     }
     async findMany(query, options = {}) {
         if (typeof this.schema.hooks.beforeFind === "function") {
@@ -133,12 +166,15 @@ class Executor {
                 params.push(JSON.stringify(value));
             }
             else {
-                params.push(value);
+                if (value === undefined || value === "" || value === null)
+                    params.push(null);
+                else
+                    params.push(value);
             }
         }
         return { fields, params };
     }
-    async insert(data, opt = {}) {
+    async insertOne(data, opt = {}) {
         if (typeof this.schema.hooks.beforeInsert === "function") {
             data = await this.schema.hooks.beforeInsert(data) || data;
         }
@@ -229,7 +265,7 @@ class Executor {
         }
         return results;
     }
-    async update(query, data) {
+    async updateOne(query, data) {
         if (typeof this.schema.hooks.beforeUpdate === "function") {
             const result = await this.schema.hooks.beforeUpdate(query, data) || [query, data];
             query = result[0];
@@ -302,6 +338,7 @@ class Executor {
         }
         const { sql, params } = (0, index_js_1.parseAggregate)(this.table, options);
         const finalSql = `SELECT ${sql}`;
+        console.log(finalSql, params);
         const result = await this.execute(finalSql, params);
         if (typeof this.schema.hooks.AFterAggregate === "function") {
             return await this.schema.hooks.AFterAggregate(result);

@@ -2,7 +2,7 @@ import Cleint from "../client.js";
 import Executor from "./executor.js";
 import { Schema } from "../schema/index.js";
 import type { Query } from "../parse/operators/index.js"
-import type { FindOptions, FindOneOptions, InsertOptions, insertManyOptions, AggregationOptions } from "./options.js"
+import type { FindOptions, FindOneOptions, InsertOptions, insertManyOptions, AggregationOptions, MathOptions } from "./options.js"
 import { ResultSetHeader } from "mysql2"
 
 
@@ -34,36 +34,31 @@ class Model<T> {
             throw err;
         }
     }
-    
+
+    private buildExecutor() {
+        return new Executor(this.client, this.table, this.schema)
+    }
+
     findMany(query?: Query<T>, options: FindOptions<T> = {}) {
-        const execute = new Executor(this.client, this.table, this.schema)
-        return execute.findMany(query || {}, options);
+        return this.buildExecutor().findMany(query || {}, options);
     }
 
     findOne(query?: Query<T>, options: FindOneOptions<T> = {}) {
-        const execute = new Executor(this.client, this.table, this.schema)
-        return execute.findOne(query || {}, options);
+        return this.buildExecutor().findOne(query || {}, options);
     }
 
-    count(query?: Query<T>) {
-        const execute = new Executor(this.client, this.table, this.schema)
-        return execute.count(query);
-    }
 
     deleteOne(query?: Query<T>) {
-        const execute = new Executor(this.client, this.table, this.schema)
-        return execute.deleteOne(query || {});
+        return this.buildExecutor().deleteOne(query || {});
     }
 
 
     deleteMany(query?: Query<T>) {
-        const execute = new Executor(this.client, this.table, this.schema)
-        return execute.deleteMany(query || {});
+        return this.buildExecutor().deleteMany(query || {});
     }
 
-    insert(data: T, opt?: InsertOptions) {
-        const execute = new Executor(this.client, this.table, this.schema)
-        return execute.insert(data, opt);
+    insertOne(data: T, opt?: InsertOptions) {
+        return this.buildExecutor().insertOne(data, opt);
     }
 
     async insertMany(data: T[], opt?: insertManyOptions) {
@@ -72,24 +67,48 @@ class Model<T> {
         return execute.insertMany(data, opt);
     }
 
-
-    update(query: Query<T>, data: Partial<T>): Promise<ResultSetHeader> {
-        const execute = new Executor(this.client, this.table, this.schema)
-        return execute.update(query, data);
+    updateOne(query: Query<T>, data: Partial<T>): Promise<ResultSetHeader> {
+        return this.buildExecutor().updateOne(query, data);
     }
 
-    aggregate<P>(options: AggregationOptions<T>) {
-        const execute = new Executor(this.client, this.table, this.schema)
-        return execute.aggregate(options);
+
+
+    updateMany(query: Query<T>, data: Partial<T>): Promise<ResultSetHeader> {
+        return this.buildExecutor().updateMany(query, data);
     }
+
+
+    aggregate(options: AggregationOptions<T>) {
+        return this.buildExecutor().aggregate(options);
+    }
+
+
+    count<T>(options: MathOptions<T>): Promise<number> {
+        return this.buildExecutor().count(options);
+    }
+
+    sum<T>(options: MathOptions<T>): Promise<number> {
+        return this.buildExecutor().sum(options);
+    }
+
+    avg(options?: MathOptions<T>) {
+        return this.buildExecutor().avg(options || {});
+    }
+
+    max(options?: MathOptions<T>) {
+        return this.buildExecutor().max(options || {});
+    }
+
+    min(options?: MathOptions<T>) {
+        return this.buildExecutor().min(options || {});
+    }
+
     clear() {
-        const execute = new Executor(this.client, this.table, this.schema)
-        return execute.clear();
+        return this.buildExecutor().clear();
     }
 
     execute(sql: string, params: any[]) {
-        const execute = new Executor(this.client, this.table, this.schema)
-        return execute.execute(sql, params);
+        return this.buildExecutor().execute(sql, params);
     }
 
     /**
@@ -97,7 +116,7 @@ class Model<T> {
     * 从连接池借出一个绑定的执行器。
     * 注意：使用完毕后必须手动调用 executor.release() 归还连接。
     */
-    async checkout(): Promise<Executor> {
+    async checkout(): Promise<Executor<T>> {
         const conn = await this.client.getConnection();
         if (!conn) throw new Error("[ODM] Failed to get database connection");
         // 这里的第四个参数 release 传 false，表示 executor 执行方法后不自动释放
@@ -110,7 +129,7 @@ class Model<T> {
      * 逻辑：获取连接 -> 开启事务 -> 执行回调 -> 提交 -> 释放
      * 报错：自动回滚 -> 抛出错误 -> 释放
      */
-    async withTransaction<P = any>(callback: (model: Executor) => Promise<P>): Promise<P> {
+    async withTransaction<P = any>(callback: (model: Executor<T>) => Promise<P>): Promise<P> {
         const execute = await this.checkout();
         let startd = false;
         try {
@@ -130,7 +149,7 @@ class Model<T> {
         }
     }
 
-    async withPollConnection<P = any>(callback: (model: Executor) => Promise<P>): Promise<P> {
+    async withPollConnection<P = any>(callback: (model: Executor<T>) => Promise<P>): Promise<P> {
         const execute = await this.checkout();
         try {
             return await callback(execute);

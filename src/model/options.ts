@@ -1,5 +1,8 @@
 import type { OrderBy } from "../parse/parseOrder.js"
 export type { AggregationOptions } from "../parse/operators/index.js"
+import type { Query } from "../parse/operators/index.js"
+import type { Join } from "../parse/operators/aggregate.js"
+
 export type FindOneOptions<T> = {
     // 字段
     fields?: string[],
@@ -30,4 +33,11 @@ export type insertManyOptions = {
 export type UpdateOptions = {
     // Update operations don't support upsert (use insert with upsert option instead)
     upsert?: boolean;
+}
+
+
+export type MathOptions<T> = {
+    query?: Query<T>,
+    field?: string,
+    joins?: Join[]
 }

@@ -1,9 +1,10 @@
 import { isObject, isStringArray, quote } from "../utils/index.js";
 import parseQuery from "./parseQuery.js"
 import parseOrder from "./parseOrder.js";
-import { JoinTypeMap } from "./operators/aggregate.js";
 import type { JsonArrayAgg } from "./operators/aggregate.js";
 import parseJsonArrayAgg from "./parseJsonArrayAgg.js";
+import parseJoin from "./parseJoin.js";
+
 import {
     AggregationOptions, AggregateOption, OneOrMany
 } from "./operators/index.js"
@@ -15,7 +16,7 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
         if (!isStringArray(fields)) {
             throw new Error("fields must be string array");
         }
-        sqlStr += ` ${fields.join(', ')}  `
+        sqlStr += ` ${fields.join(',')}`
     } else {
         sqlStr += ` * `
     }
@@ -24,65 +25,35 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
         sqlStr += ` ${parseJsonArrayAgg(jsonArrayAgg as JsonArrayAgg<T>[])} `
     }
 
-    const specsSql = [];
-    if (specs) {
-        if (!isObject(specs)) {
-            throw new Error("specs must be object");
+    if (specs && Array.isArray(specs)) {
+        const specsSql = [];
+        for (const spec of specs) {
+
+            if (!isObject(spec)) {
+                throw new Error("each spec must be object");
+            }
+
+            if (spec.$max) specsSql.push(joinSpec<T>("MAX", spec.$max, params));
+
+            if (spec.$min) specsSql.push(joinSpec<T>("MIN", spec.$min, params));
+
+            if (spec.$sum) specsSql.push(joinSpec<T>("SUM", spec.$sum, params));
+
+            if (spec.$avg) specsSql.push(joinSpec<T>("AVG", spec.$avg, params));
+
+            if (spec.$count) specsSql.push(joinSpec<T>("COUNT", spec.$count, params));
         }
 
-        if (specs.$max) specsSql.push(joinSpec<T>("MAX", specs.$max, params));
 
-        if (specs.$min) specsSql.push(joinSpec<T>("MIN", specs.$min, params));
-
-        if (specs.$sum) specsSql.push(joinSpec<T>("SUM", specs.$sum, params));
-
-        if (specs.$avg) specsSql.push(joinSpec<T>("AVG", specs.$avg, params));
-
-        if (specs.$count) specsSql.push(joinSpec<T>("COUNT", specs.$count, params));
+        sqlStr += `, ${specsSql.join(", ")}FROM ${quote(table)} `
     }
-    sqlStr += `${specsSql.join(", ")}FROM ${quote(table)} `
 
 
     if (joins) {
-        if (!Array.isArray) {
-            throw new Error("joins must be array");
-        }
-        let asIndex = 0;
-        const joinsSql = joins.map(item => {
-            if (!isObject(item)) {
-                throw new Error("joins must be array of object");
-            }
-            if (!item.table) {
-                throw new Error("table is required");
-            }
-            if (!isObject(item.on) && item.type != 'self') {
-                throw new Error("on is required");
-            }
-            // 1. 生成别名：优先用用户的，没有就自增
-            const tableAlias = item.as || `t${asIndex++}`;
-
-            // 2. 解析 ON 条件 (这里的 value 以后记得接 $ref 逻辑)
-            let onStr = "";
-            if (item.on) {
-                onStr = Object.entries(item.on).map(([key, value]) => {
-                    return `${quote(key)} = ${quote(value)}`;
-                }).join(" AND ");
-            }
-
-            const joinOn = onStr ? ` ON ${onStr}` : "";
-            // 3. 根据类型生成 SQL
-            if (item.type === 'self') {
-                return ` INNER JOIN ${quote(item.table)} AS ${quote(tableAlias)}${joinOn}`;
-            } else {
-                const joinType = JoinTypeMap[item.type || 'inner']; // 默认 inner
-                return ` ${joinType} ${quote(item.table)} AS ${quote(tableAlias)}${joinOn}`;
-            }
-        }).join(" ")
-
+        const joinsSql = parseJoin(joins);
         // 4. 组装到主 SQL
         // 注意：JOIN 是紧跟在 FROM table 之后的
         sqlStr += ` ${joinsSql}`;
-
     }
 
 

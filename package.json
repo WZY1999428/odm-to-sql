@@ -1,9 +1,8 @@
 {
   "name": "mysql-odm",
-  "version": "1.0.1",
+  "version": "0.0.2",
   "description": "High-performance, lightweight MySQL ODM with <1μs parsing speed and advanced aggregation support.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
@@ -18,9 +17,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json",
-    "watch:build": "tsc --watch",
-    "test": "ts-node test.ts",
-    "bench": "ts-node benchmark.ts"
+    "watch:build": "tsc --watch"
   },
   "keywords": [
     "mysql",
@@ -38,7 +35,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "typescript": "^5.0.0",
-    "ts-node": "^10.9.1"
+    "tsx": "^4.23.13",
+    "typescript": "^5.0.0"
   }
 }

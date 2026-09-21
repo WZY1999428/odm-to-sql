@@ -20,7 +20,7 @@ class MySqlODM {
             : await Client.connectionPool(options);
     }
 
-    async model<T>(table: string, schema?: Schema<T>) {
+    async model<T>(table: string, schema?: Schema<T>): Promise<Model<T>> {
         if (!this.conn) throw new Error("Database not connected");
         if (this.models.has(table)) return this.models.get(table) as Model<T>;
         if (!(schema instanceof Schema)) {
@@ -51,10 +51,8 @@ class MySqlODM {
             console.warn(`已自动添加新增字段: ${notFields.join(', ')}`);
         }
 
-
-
         this.models.set(table, model);
-        return this.models.get(table) as Model<T>;
+        return model
     }
 
     private buildColumnSQL(name: string, field: any) {

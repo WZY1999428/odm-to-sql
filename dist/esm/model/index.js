@@ -1,9 +1,4 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const executor_js_1 = __importDefault(require("./executor.js"));
+import Executor from "./executor.js";
 class Model {
     table;
     schema;
@@ -34,51 +29,59 @@ class Model {
             throw err;
         }
     }
+    buildExecutor() {
+        return new Executor(this.client, this.table, this.schema);
+    }
     findMany(query, options = {}) {
-        const execute = new executor_js_1.default(this.client, this.table, this.schema);
-        return execute.findMany(query || {}, options);
+        return this.buildExecutor().findMany(query || {}, options);
     }
     findOne(query, options = {}) {
-        const execute = new executor_js_1.default(this.client, this.table, this.schema);
-        return execute.findOne(query || {}, options);
-    }
-    count(query) {
-        const execute = new executor_js_1.default(this.client, this.table, this.schema);
-        return execute.count(query);
+        return this.buildExecutor().findOne(query || {}, options);
     }
     deleteOne(query) {
-        const execute = new executor_js_1.default(this.client, this.table, this.schema);
-        return execute.deleteOne(query || {});
+        return this.buildExecutor().deleteOne(query || {});
     }
     deleteMany(query) {
-        const execute = new executor_js_1.default(this.client, this.table, this.schema);
-        return execute.deleteMany(query || {});
+        return this.buildExecutor().deleteMany(query || {});
     }
-    insert(data, opt) {
-        const execute = new executor_js_1.default(this.client, this.table, this.schema);
-        return execute.insert(data, opt);
+    insertOne(data, opt) {
+        return this.buildExecutor().insertOne(data, opt);
     }
     async insertMany(data, opt) {
         if (!Array.isArray(data))
             throw new Error("[ODM] insertMany data must be an array");
-        const execute = new executor_js_1.default(this.client, this.table, this.schema, opt?.useTransaction ? await this.client.getConnection() : undefined);
+        const execute = new Executor(this.client, this.table, this.schema, opt?.useTransaction ? await this.client.getConnection() : undefined);
         return execute.insertMany(data, opt);
     }
-    update(query, data) {
-        const execute = new executor_js_1.default(this.client, this.table, this.schema);
-        return execute.update(query, data);
+    updateOne(query, data) {
+        return this.buildExecutor().updateOne(query, data);
+    }
+    updateMany(query, data) {
+        return this.buildExecutor().updateMany(query, data);
     }
     aggregate(options) {
-        const execute = new executor_js_1.default(this.client, this.table, this.schema);
-        return execute.aggregate(options);
+        return this.buildExecutor().aggregate(options);
+    }
+    count(options) {
+        return this.buildExecutor().count(options);
+    }
+    sum(options) {
+        return this.buildExecutor().sum(options);
+    }
+    avg(options) {
+        return this.buildExecutor().avg(options || {});
+    }
+    max(options) {
+        return this.buildExecutor().max(options || {});
+    }
+    min(options) {
+        return this.buildExecutor().min(options || {});
     }
     clear() {
-        const execute = new executor_js_1.default(this.client, this.table, this.schema);
-        return execute.clear();
+        return this.buildExecutor().clear();
     }
     execute(sql, params) {
-        const execute = new executor_js_1.default(this.client, this.table, this.schema);
-        return execute.execute(sql, params);
+        return this.buildExecutor().execute(sql, params);
     }
     /**
     *推荐当前使用连接池时使用
@@ -90,7 +93,7 @@ class Model {
         if (!conn)
             throw new Error("[ODM] Failed to get database connection");
         // 这里的第四个参数 release 传 false，表示 executor 执行方法后不自动释放
-        return new executor_js_1.default(this.client, this.table, this.schema, conn);
+        return new Executor(this.client, this.table, this.schema, conn);
     }
     /**
      * 自动事务包装器
@@ -132,4 +135,4 @@ class Model {
         }
     }
 }
-exports.default = Model;
+export default Model;

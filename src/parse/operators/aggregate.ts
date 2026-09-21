@@ -80,12 +80,12 @@ export type JsonArrayAgg<T> = {
     fields: Record<string, string>[] | string
 }
 
-type Join = NormalJoin | SelfJoin;
+export type Join = NormalJoin | SelfJoin;
 
 export type AggregationOptions<T> = {
     fields: ColumnFields<T>[];      // 支持 ['u.id', 'p.title']
     jsonArrayAgg?: (JsonArrayAgg<T> | string)[];
-    specs?: AggregateFields<T>;      // 选填：你要聚合哪些字段？
+    specs?: AggregateFields<T>[];      // 选填：你要聚合哪些字段？
     query?: Query<T>;              // 选填：过滤条件 (WHERE)
     group?: (keyof T)[];         // 选填：按什么分组？
     having?: Query<T>;             // 选填：分组后的过滤 (HAVING)

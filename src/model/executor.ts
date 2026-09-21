@@ -1,17 +1,19 @@
 import { parseOrder, parseQuery, parseUpdate, parseAggregate } from "../parse/index.js";
-import type { Query, Update, AggregationOptions } from "../parse/operators/index.js"
-import type { FindOptions, FindOneOptions, InsertOptions, UpdateOptions, insertManyOptions, } from "./options.js"
+import type { Query, AggregationOptions, mathType } from "../parse/operators/index.js"
+import type { FindOptions, FindOneOptions, InsertOptions, insertManyOptions, MathOptions } from "./options.js"
 import { newConnection, } from "../client.js";
 import { Schema, DataType } from "../schema/index.js";
 import Client from "../client.js";
 import { quote } from "../utils/index.js";
+import parseJoin from "../parse/parseJoin.js"
 import { ResultSetHeader } from "mysql2";
 
 
-class Executor {
+
+class Executor<T> {
     constructor(private client: Client,
         private table: string,
-        private schema: Schema<any>,
+        private schema: Schema<T>,
         private conn?: newConnection,
     ) {
 
@@ -92,27 +94,69 @@ class Executor {
         if (sql) joinSql += ` WHERE ${sql} `;
         joinSql += ` ${parseOrder(sort)} LIMIT 1`;
         const result = await this.execute(joinSql, params) as T[];
+        console.log(joinSql, params);
         if (typeof this.schema.hooks.afterFind === "function") {
-            return await this.schema.hooks.afterFind(result[0]);
+            return await this.schema.hooks.afterFind(result[0] as any);
         }
         return result[0];
     }
 
 
-    async count<T>(query?: Query<T>): Promise<number> {
-        let sqlWhere = "";
-        let paramsWhere: any[] = [];
-        if (query && Object.keys(query).length) {
-            const { sql, params } = parseQuery(query);
-            sqlWhere = sql;
-            paramsWhere = params;
-        }
-        let joinSql = `SELECT COUNT(*) AS total FROM ${quote(this.table)}`;
-        if (sqlWhere) joinSql += ` WHERE ${sqlWhere} `;
-        const result: any = await this.execute(joinSql, paramsWhere)
+    async count<T>(options: MathOptions<T>): Promise<number> {
+        const { sql, params } = this.buildMathSql('COUNT', options);
+        const result: any = await this.execute(sql, params)
         return Number(result?.[0]?.total || 0);
     }
 
+
+    async sum<T>(options: MathOptions<T>): Promise<number> {
+        const { sql, params } = this.buildMathSql('SUM', options);
+        const result: any = await this.execute(sql, params)
+        return Number(result?.[0]?.total || 0);
+    }
+
+    async avg<T>(options: MathOptions<T>): Promise<number> {
+        const { sql, params } = this.buildMathSql('AVG', options);
+        const result: any = await this.execute(sql, params)
+        return Number(result?.[0]?.total || 0);
+    }
+
+    async max<T>(options: MathOptions<T>): Promise<number> {
+        const { sql, params } = this.buildMathSql('MAX', options);
+        const result: any = await this.execute(sql, params)
+        return Number(result?.[0]?.total || 0);
+    }
+
+    async min<T>(options: MathOptions<T>): Promise<number> {
+        const { sql, params } = this.buildMathSql('MIN', options);
+        const result: any = await this.execute(sql, params)
+        return Number(result?.[0]?.total || 0);
+    }
+
+
+    private buildMathSql<T>(mathType: mathType, options: MathOptions<T>): { sql: string; params: any[] } {
+
+        let sqlWhere = "";
+        let paramsWhere: any[] = [];
+
+        const { field = '*', joins = [] } = options;
+
+        if (options.query && Object.keys(options.query).length) {
+            const { sql, params } = parseQuery(options.query);
+            sqlWhere = sql;
+            paramsWhere = params;
+        }
+
+        const expr = mathType === 'COUNT' && !options.field ? '*' : quote(field);
+
+        let sql = `SELECT ${mathType}(${expr}) AS total FROM ${quote(this.table)}`;
+
+        if (joins.length) sql += ` ${parseJoin(joins)}`;
+
+        if (sqlWhere) sql += ` WHERE ${sqlWhere}`;
+
+        return { sql, params: paramsWhere };
+    }
 
     async findMany<T>(query: Query<T>, options: FindOptions<T> = {}) {
         if (typeof this.schema.hooks.beforeFind === "function") {
@@ -125,7 +169,7 @@ class Executor {
         joinSql += ` ${parseOrder(sort)} ${this.buildLimit(limit, offset)} `;
         const results = await this.execute(joinSql, params);
         if (typeof this.schema.hooks.afterFind === "function") {
-            return this.schema.hooks.afterFind(results as T[]);
+            return this.schema.hooks.afterFind(results as any[]);
         }
         return results;
     }
@@ -148,14 +192,15 @@ class Executor {
             if (fieldType === DataType.Json && typeof value === "object" && value != null) {
                 params.push(JSON.stringify(value));
             } else {
-                params.push(value);
+                if (value === undefined || value === "" || value === null) params.push(null);
+                else params.push(value);
             }
         }
 
         return { fields, params };
     }
 
-    async insert<T>(data: T, opt: InsertOptions = {}) {
+    async insertOne(data: T, opt: InsertOptions = {}) {
         if (typeof this.schema.hooks.beforeInsert === "function") {
             data = await this.schema.hooks.beforeInsert(data) || data;
         }
@@ -175,7 +220,7 @@ class Executor {
         }
         const result = await this.execute(sql, params);
         if (typeof this.schema.hooks.afterInsert === "function") {
-            return await this.schema.hooks.afterInsert(result);
+            return await this.schema.hooks.afterInsert(result as any);
         }
         return result
     }
@@ -246,7 +291,7 @@ class Executor {
     }
 
 
-    async update<T>(query: Query<T>, data: Partial<T>): Promise<ResultSetHeader> {
+    async updateOne(query: Query<T>, data: Partial<T>): Promise<ResultSetHeader> {
         if (typeof this.schema.hooks.beforeUpdate === "function") {
             const result = await this.schema.hooks.beforeUpdate(query, data) || [query, data]
             query = result[0]
@@ -261,13 +306,13 @@ class Executor {
         `;
         const result = await this.execute(finalSql, [...values, ...whereParams]);
         if (typeof this.schema.hooks.afterUpdate === "function") {
-            return await this.schema.hooks.afterUpdate(result);
+            return await this.schema.hooks.afterUpdate(result as any);
         }
         return result as ResultSetHeader
     }
 
 
-    async updateMany<T>(query: Query<T>, data: Partial<T>) {
+    async updateMany(query: Query<T>, data: Partial<T>) {
         if (typeof this.schema.hooks.beforeUpdate === "function") {
             const result = await this.schema.hooks.beforeUpdate(query, data) || [query, data]
             query = result[0]
@@ -283,12 +328,12 @@ class Executor {
 
         const result = await this.execute(finalSql, [...values, ...whereParams]);
         if (typeof this.schema.hooks.afterUpdate === "function") {
-            return await this.schema.hooks.afterUpdate(result);
+            return await this.schema.hooks.afterUpdate(result as any);
         }
         return result as ResultSetHeader
     }
 
-    async deleteOne<T>(query: Query<T>) {
+    async deleteOne(query: Query<T>) {
         if (typeof this.schema.hooks.beforeDelete === "function") {
             query = await this.schema.hooks.beforeDelete(query) || query;
         }
@@ -296,7 +341,7 @@ class Executor {
         const finalSql = `DELETE FROM ${quote(this.table)} WHERE ${whereSql} LIMIT 1`;
         const result = await this.execute(finalSql, whereParams);
         if (typeof this.schema.hooks.afterDelete === "function") {
-            return await this.schema.hooks.afterDelete(result);
+            return await this.schema.hooks.afterDelete(result as any);
         }
         return result as ResultSetHeader;
     }
@@ -309,7 +354,7 @@ class Executor {
         const finalSql = `DELETE FROM ${quote(this.table)} WHERE ${whereSql}`;
         const result = await this.execute(finalSql, whereParams);
         if (typeof this.schema.hooks.afterDelete === "function") {
-            return await this.schema.hooks.afterDelete(result);
+            return await this.schema.hooks.afterDelete(result as any);
         }
         return result as ResultSetHeader;
     }
@@ -320,13 +365,15 @@ class Executor {
         return result as ResultSetHeader;
     }
 
-    async aggregate<T, P>(options: AggregationOptions<T>): Promise<P[]> {
+    async aggregate<P>(options: AggregationOptions<T>): Promise<P[]> {
         if (typeof this.schema.hooks.beforeAggregate === "function") {
             options = await this.schema.hooks.beforeAggregate(options) || options;
         }
 
         const { sql, params } = parseAggregate(this.table, options);
         const finalSql = `SELECT ${sql}`;
+        console.log(finalSql, params);
+
         const result = await this.execute(finalSql, params);
         if (typeof this.schema.hooks.AFterAggregate === "function") {
             return await this.schema.hooks.AFterAggregate(result);

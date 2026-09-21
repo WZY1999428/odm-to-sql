@@ -1,5 +1,7 @@
 import type { OrderBy } from "../parse/parseOrder.js";
 export type { AggregationOptions } from "../parse/operators/index.js";
+import type { Query } from "../parse/operators/index.js";
+import type { Join } from "../parse/operators/aggregate.js";
 export type FindOneOptions<T> = {
     fields?: string[];
     sort?: OrderBy<T>;
@@ -22,5 +24,10 @@ export type insertManyOptions = {
 } & InsertOptions;
 export type UpdateOptions = {
     upsert?: boolean;
+};
+export type MathOptions<T> = {
+    query?: Query<T>;
+    field?: string;
+    joins?: Join[];
 };
 //# sourceMappingURL=options.d.ts.map

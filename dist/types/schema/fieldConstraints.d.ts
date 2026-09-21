@@ -12,6 +12,7 @@ export type FieldConstraints = {
     index?: boolean | undefined;
     unique?: boolean | undefined;
     uniqueGroup?: string[] | undefined;
+    onUpdate?: 'CURRENT_TIMESTAMP' | (string & {}) | undefined;
 };
 export type NumericSchema = FieldConstraints & {
     type: DataType.Decimal | DataType.Float | DataType.Double;

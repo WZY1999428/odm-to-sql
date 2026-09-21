@@ -51,7 +51,7 @@ class MySqlODM {
             console.warn(`已自动添加新增字段: ${notFields.join(', ')}`);
         }
         this.models.set(table, model);
-        return this.models.get(table);
+        return model;
     }
     buildColumnSQL(name, field) {
         let sql = `\`${name}\` ${field.type}`;

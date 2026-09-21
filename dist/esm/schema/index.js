@@ -1,4 +1,3 @@
-"use strict";
 // 类型	大小	范围（有符号）	范围（无符号）	用途
 // TINYINT	1 Bytes	(-128，127)	(0，255)	小整数值
 // SMALLINT	2 Bytes	(-32 768，32 767)	(0，65 535)	大整数值
@@ -10,8 +9,6 @@
 // DOUBLE	8 Bytes	(-1.797 693 134 862 315 7 E+308，-2.225 073 858 507 201 4 E-308)，0，(2.225 073 858 507 201 4 E-308，1.797 693 134 862 315 7 E+308)	0，(2.225 073 858 507 201 4 E-308，1.797 693 134 862 315 7 E+308)	双精度
 // 浮点数值
 // DECIMAL	对DECIMAL(M,D) ，如果M>D，为M+2否则为D+2	依赖于M和D的值	依赖于M和D的值	小
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Schema = exports.FieldSchemaBuilder = exports.DataType = void 0;
 // 字符串类型
 // 字符串类型指CHAR、VARCHAR、BINARY、VARBINARY、BLOB、TEXT、ENUM和SET。该节描述了这些类型如何工作以及如何在查询中使用这些类型。
 // 类型	大小	用途
@@ -38,8 +35,8 @@ exports.Schema = exports.FieldSchemaBuilder = exports.DataType = void 0;
 // TIMESTAMP	4	
 // '1970-01-01 00:00:01' UTC 到 '2038-01-19 03:14:07' UTC
 // 结束时间是第 2147483647 秒，北京时间 2038-1-19 11:14:07，格林尼治时间 2038年1月19日 凌晨 03:14:07
-const index_js_1 = require("../utils/index.js");
-var DataType;
+import { quote } from "../utils/index.js";
+export var DataType;
 (function (DataType) {
     DataType["TinyInt"] = "TINYINT";
     DataType["SmallInt"] = "SMALLINT";
@@ -66,9 +63,9 @@ var DataType;
     DataType["Year"] = "YEAR";
     DataType["DateTime"] = "DATETIME";
     DataType["Timestamp"] = "TIMESTAMP";
-})(DataType || (exports.DataType = DataType = {}));
+})(DataType || (DataType = {}));
 const allDataTypes = new Set(Object.values(DataType));
-class FieldSchemaBuilder {
+export class FieldSchemaBuilder {
     static Char(lengthOrOpt, opt) {
         const { length = 1, opt: finalOpt } = resolveCharParams(lengthOrOpt, opt);
         return { type: DataType.Char, length, ...sanitizeConstraints(finalOpt) };
@@ -123,7 +120,6 @@ class FieldSchemaBuilder {
         return { type, ...sanitizeConstraints(opt) };
     }
 }
-exports.FieldSchemaBuilder = FieldSchemaBuilder;
 function throwError(msg) {
     // 在信息前加上 [Query Error] 前缀，让它在日志中更显眼
     const error = new Error(`\n[Query Error]\nCause: ${msg}\n`);
@@ -181,7 +177,7 @@ function sanitizeConstraints(opt = {}) {
         autoIncrement, nullable, primaryKey, unique, required, uniqueGroup, default: defaultValue, index
     }).filter(([_, v]) => v !== undefined && v !== null));
 }
-class Schema {
+export class Schema {
     fields;
     fieldsMap;
     hooks;
@@ -228,7 +224,7 @@ class Schema {
         if (!config || !config.type || !allDataTypes.has(config.type)) {
             throw new Error(`${name} value is undefined`);
         }
-        const fieldName = (0, index_js_1.quote)(name);
+        const fieldName = quote(name);
         const fieldType = config.type;
         definition += `${fieldName} ${config.type}`;
         if (fieldType === DataType.Char || fieldType === DataType.VarChar) {
@@ -249,7 +245,9 @@ class Schema {
             definition += ' AUTO_INCREMENT';
         if (config.default !== undefined)
             definition += ` DEFAULT ${config.default}`;
-        else if (typeof config.autoIncrement === 'object' && config.autoIncrement?.enabled === true) {
+        if (config.onUpdate)
+            definition += ` ON UPDATE ${config.onUpdate}`;
+        if (typeof config.autoIncrement === 'object' && config.autoIncrement?.enabled === true) {
             definition += ' AUTO_INCREMENT';
             alterTable = `ALTER TABLE \`${this.table}\` AUTO_INCREMENT = ${config.autoIncrement.start};`;
         }
@@ -275,4 +273,3 @@ class Schema {
         };
     }
 }
-exports.Schema = Schema;

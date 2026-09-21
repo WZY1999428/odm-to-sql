@@ -8,8 +8,8 @@ exports.isAggregateOption = isAggregateOption;
 const index_js_1 = require("../utils/index.js");
 const parseQuery_js_1 = __importDefault(require("./parseQuery.js"));
 const parseOrder_js_1 = __importDefault(require("./parseOrder.js"));
-const aggregate_js_1 = require("./operators/aggregate.js");
 const parseJsonArrayAgg_js_1 = __importDefault(require("./parseJsonArrayAgg.js"));
+const parseJoin_js_1 = __importDefault(require("./parseJoin.js"));
 function parseAggregate(table, options) {
     let sqlStr = "";
     const params = [];
@@ -18,7 +18,7 @@ function parseAggregate(table, options) {
         if (!(0, index_js_1.isStringArray)(fields)) {
             throw new Error("fields must be string array");
         }
-        sqlStr += ` ${fields.join(', ')}  `;
+        sqlStr += ` ${fields.join(',')}`;
     }
     else {
         sqlStr += ` * `;
@@ -26,57 +26,27 @@ function parseAggregate(table, options) {
     if (Array.isArray(jsonArrayAgg)) {
         sqlStr += ` ${(0, parseJsonArrayAgg_js_1.default)(jsonArrayAgg)} `;
     }
-    const specsSql = [];
-    if (specs) {
-        if (!(0, index_js_1.isObject)(specs)) {
-            throw new Error("specs must be object");
+    if (specs && Array.isArray(specs)) {
+        const specsSql = [];
+        for (const spec of specs) {
+            if (!(0, index_js_1.isObject)(spec)) {
+                throw new Error("each spec must be object");
+            }
+            if (spec.$max)
+                specsSql.push(joinSpec("MAX", spec.$max, params));
+            if (spec.$min)
+                specsSql.push(joinSpec("MIN", spec.$min, params));
+            if (spec.$sum)
+                specsSql.push(joinSpec("SUM", spec.$sum, params));
+            if (spec.$avg)
+                specsSql.push(joinSpec("AVG", spec.$avg, params));
+            if (spec.$count)
+                specsSql.push(joinSpec("COUNT", spec.$count, params));
         }
-        if (specs.$max)
-            specsSql.push(joinSpec("MAX", specs.$max, params));
-        if (specs.$min)
-            specsSql.push(joinSpec("MIN", specs.$min, params));
-        if (specs.$sum)
-            specsSql.push(joinSpec("SUM", specs.$sum, params));
-        if (specs.$avg)
-            specsSql.push(joinSpec("AVG", specs.$avg, params));
-        if (specs.$count)
-            specsSql.push(joinSpec("COUNT", specs.$count, params));
+        sqlStr += `, ${specsSql.join(", ")}FROM ${(0, index_js_1.quote)(table)} `;
     }
-    sqlStr += `${specsSql.join(", ")}FROM ${(0, index_js_1.quote)(table)} `;
     if (joins) {
-        if (!Array.isArray) {
-            throw new Error("joins must be array");
-        }
-        let asIndex = 0;
-        const joinsSql = joins.map(item => {
-            if (!(0, index_js_1.isObject)(item)) {
-                throw new Error("joins must be array of object");
-            }
-            if (!item.table) {
-                throw new Error("table is required");
-            }
-            if (!(0, index_js_1.isObject)(item.on) && item.type != 'self') {
-                throw new Error("on is required");
-            }
-            // 1. 生成别名：优先用用户的，没有就自增
-            const tableAlias = item.as || `t${asIndex++}`;
-            // 2. 解析 ON 条件 (这里的 value 以后记得接 $ref 逻辑)
-            let onStr = "";
-            if (item.on) {
-                onStr = Object.entries(item.on).map(([key, value]) => {
-                    return `${(0, index_js_1.quote)(key)} = ${(0, index_js_1.quote)(value)}`;
-                }).join(" AND ");
-            }
-            const joinOn = onStr ? ` ON ${onStr}` : "";
-            // 3. 根据类型生成 SQL
-            if (item.type === 'self') {
-                return ` INNER JOIN ${(0, index_js_1.quote)(item.table)} AS ${(0, index_js_1.quote)(tableAlias)}${joinOn}`;
-            }
-            else {
-                const joinType = aggregate_js_1.JoinTypeMap[item.type || 'inner']; // 默认 inner
-                return ` ${joinType} ${(0, index_js_1.quote)(item.table)} AS ${(0, index_js_1.quote)(tableAlias)}${joinOn}`;
-            }
-        }).join(" ");
+        const joinsSql = (0, parseJoin_js_1.default)(joins);
         // 4. 组装到主 SQL
         // 注意：JOIN 是紧跟在 FROM table 之后的
         sqlStr += ` ${joinsSql}`;

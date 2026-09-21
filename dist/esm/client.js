@@ -1,9 +1,4 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const promise_1 = __importDefault(require("mysql2/promise"));
+import mysql from "mysql2/promise";
 class Client {
     conn = null;
     dbPoll = null;
@@ -19,7 +14,7 @@ class Client {
     }
     static async connection(options) {
         const { database, ...connectionConfig } = options;
-        const conn = await promise_1.default.createConnection(connectionConfig);
+        const conn = await mysql.createConnection(connectionConfig);
         if (database) {
             await this.createDataBase(database, conn);
         }
@@ -28,7 +23,7 @@ class Client {
     static async connectionPool(options) {
         // const { database, ...connectionConfig } = options;
         const database = options.database;
-        const pool = promise_1.default.createPool(options);
+        const pool = mysql.createPool(options);
         if (database) {
             const conn = await pool.getConnection();
             await conn.query(`CREATE DATABASE IF NOT EXISTS \`${database}\` CHARACTER SET utf8mb4;`);
@@ -111,4 +106,4 @@ class Client {
         }
     }
 }
-exports.default = Client;
+export default Client;

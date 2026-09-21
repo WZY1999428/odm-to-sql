@@ -47,11 +47,14 @@ function parseUpdate(data, schema) {
             throw new Error(`Field ${operator} not found in schema`);
         }
         setSql.push(`${(0, index_js_1.parseJson)(operator)} = ?`);
-        if (typeof value === "object") {
+        if (typeof value === "object" && value != null) {
             params.push(JSON.stringify(value));
         }
         else {
-            params.push(value);
+            if (value === undefined || value === "")
+                params.push(null);
+            else
+                params.push(value);
         }
     }
     return { sql: setSql.join(', '), params };

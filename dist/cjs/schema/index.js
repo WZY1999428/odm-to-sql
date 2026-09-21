@@ -249,7 +249,9 @@ class Schema {
             definition += ' AUTO_INCREMENT';
         if (config.default !== undefined)
             definition += ` DEFAULT ${config.default}`;
-        else if (typeof config.autoIncrement === 'object' && config.autoIncrement?.enabled === true) {
+        if (config.onUpdate)
+            definition += ` ON UPDATE ${config.onUpdate}`;
+        if (typeof config.autoIncrement === 'object' && config.autoIncrement?.enabled === true) {
             definition += ' AUTO_INCREMENT';
             alterTable = `ALTER TABLE \`${this.table}\` AUTO_INCREMENT = ${config.autoIncrement.start};`;
         }

@@ -1,6 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.JoinTypeMap = void 0;
 // 1. 聚合函数
 const AggregateFunctionsMap = {
     "$min": "MIN",
@@ -14,7 +11,7 @@ const PipelineStagesMap = {
     "$group": "GROUP BY",
     "$having": "HAVING"
 };
-exports.JoinTypeMap = {
+export const JoinTypeMap = {
     inner: 'INNER JOIN',
     left: 'LEFT JOIN',
     right: 'RIGHT JOIN',

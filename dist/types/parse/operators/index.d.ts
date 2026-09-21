@@ -9,6 +9,8 @@ export type Query<T> = {
     [P in keyof T & string]?: T[P] | Condition<T[P]>;
 } & {
     [K in Logical]?: K extends '$not' ? Query<T> : Query<T>[];
+} & {
+    [key: string]: any;
 };
 type ArithmeticOperator<T> = Partial<Record<keyof T, number>>;
 export type Update<T> = {
@@ -20,6 +22,8 @@ export type Update<T> = {
     $max?: Partial<T>;
     $min?: Partial<T>;
     $concat?: Partial<Record<keyof T, string>>;
+    $col?: Partial<Record<keyof T, string>>;
+    $json?: string;
 } & {
     [P in keyof T & string]?: T[P] | UpdateAtomic;
 };
@@ -31,5 +35,6 @@ type Condition<V> = QueryOperators<V> & {
     $like?: string;
     $nlike?: string;
 };
+export type mathType = 'SUM' | 'AVG' | 'MAX' | 'MIN' | 'COUNT';
 export type { Logical, QueryOperators, AggregateOps, PipelineStages, AggregateOption, AggregateFields, AggregationOptions, OneOrMany };
 //# sourceMappingURL=index.d.ts.map
