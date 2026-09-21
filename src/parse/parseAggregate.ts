@@ -1,8 +1,6 @@
 import { isObject, isStringArray, quote } from "../utils/index.js";
 import parseQuery from "./parseQuery.js"
 import parseOrder from "./parseOrder.js";
-import type { JsonArrayAgg } from "./operators/aggregate.js";
-import parseJsonArrayAgg from "./parseJsonArrayAgg.js";
 import parseJoin from "./parseJoin.js";
 
 import {
@@ -12,8 +10,6 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
 
     let sqlStr: string = ""
     let sleectSqlStr: string = "";
-    let specsSqlStr: string = "";
-    let joinsSqlStr: string = "";
 
     const params: any[] = []
     const { fields, specs, query, group, having, sort, joins, limit, offset } = options;
@@ -25,8 +21,6 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
     } else {
         sleectSqlStr += ` * `
     }
-
-
 
     if (specs && Array.isArray(specs)) {
         const specsSql = [];
@@ -47,16 +41,17 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
             if (spec.$count) specsSql.push(joinSpec<T>("COUNT", spec.$count, params));
         }
 
-
-        sqlStr += `, ${specsSql.join(", ")}FROM ${quote(table)} `
+        sqlStr += `, ${specsSql.join(", ")} `
     }
 
+    sqlStr += `FROM ${quote(table)} `
 
     if (joins) {
-        const joinsSql = parseJoin(joins);
+        const { joinSql, select } = parseJoin(joins);
+        if (select) sleectSqlStr += `, ${select}`
         // 4. 组装到主 SQL
         // 注意：JOIN 是紧跟在 FROM table 之后的
-        sqlStr += ` ${joinsSql}`;
+        sqlStr += ` ${joinSql}`;
     }
 
 
@@ -103,7 +98,7 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
         sqlStr += ` OFFSET ${offset}`;
     }
 
-    return { sql: sqlStr, params }
+    return { sql: `${sleectSqlStr} ${sqlStr}`, params }
 }
 
 

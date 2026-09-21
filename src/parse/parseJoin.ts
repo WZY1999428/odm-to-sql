@@ -17,12 +17,13 @@ const joinOperators: Record<string, string> = {
     $isNotNull: "IS NOT NULL",
 };
 
-function parseJoin<T>(joins: Join<T>[]): string {
+function parseJoin(joins: Join[]): { joinSql: string; select: string } {
     if (!Array.isArray(joins)) {
         throw new Error("joins must be array");
     }
     let asIndex = 0;
-    const joinsSql = joins.map(item => {
+    const joinsList = joins.map(item => {
+        let select: string[] = [];
         if (!isObject(item)) {
             throw new Error("joins must be array of object");
         }
@@ -34,6 +35,11 @@ function parseJoin<T>(joins: Join<T>[]): string {
         }
         // 1. 生成别名：优先用用户的，没有就自增
         const tableAlias = item.as || `t${asIndex++}`;
+
+
+        if (item.select && Array.isArray(item.select)) {
+            select = parseJoinSelect(item);
+        }
 
         // 2. 解析 ON 条件 (这里的 value 以后记得接 $ref 逻辑)
         let onStr = "";
@@ -77,14 +83,73 @@ function parseJoin<T>(joins: Join<T>[]): string {
         const joinOn = onStr ? ` ON ${onStr}` : "";
         // 3. 根据类型生成 SQL
         if (item.type === 'self') {
-            return ` INNER JOIN ${quote(item.table)} AS ${quote(tableAlias)}${joinOn}`;
+            return { sql: ` INNER JOIN ${quote(item.table)} AS ${quote(tableAlias)}${joinOn}`, select };
         } else {
             const joinType = JoinTypeMap[item.type || 'inner']; // 默认 inner
-            return ` ${joinType} ${quote(item.table)} AS ${quote(tableAlias)}${joinOn}`;
+            return { sql: ` ${joinType} ${quote(item.table)} AS ${quote(tableAlias)}${joinOn}`, select };
         }
-    }).join(" ")
 
-    return joinsSql;
+    });
+
+    return {
+        joinSql: joinsList.map(it => it.sql).join(" , "),
+        select: joinsList.flatMap(it => it.select).join(" , "),
+    };
+}
+
+
+
+function parseJoinSelect(joinItem: Join): string[] {
+    if (!joinItem.select || !Array.isArray(joinItem.select)) {
+        return [];
+    }
+    
+    // 获取别名
+    const alias = joinItem.as || joinItem.table;
+
+    return joinItem.select.map(item => {
+        // 1. 如果是 JSON 数组聚合类型（默认）
+        if (item.type === 'jsonArray' || !item.type) {
+            if (!item.fields || Object.keys(item.fields).length === 0) {
+                throw new Error(`select fields is required for json_array on table ${joinItem.table}`);
+            }
+
+            // 提取主键或任意第一个字段作为 COUNT 的依据（例如 r.id）
+            const firstField = item.countField || Object.values(item.fields)[0];
+
+            if (!firstField) {
+                throw new Error(`select fields is required for json_array on table ${joinItem.table}`);
+            }
+
+            // 组装 JSON_OBJECT('id', r.id, 'name', r.name)
+            const jsonObjectArgs = Object.entries(item.fields)
+                .map(([key, val]) => `'${key}', ${quote(val)}`)
+                .join(", ");
+
+            // 生成你需要的 IF(...) 语句
+            return `IF(COUNT(${quote(firstField)}) = 0, JSON_ARRAY(), JSON_ARRAYAGG(JSON_OBJECT(${jsonObjectArgs}))) AS ${quote(item.as)}`;
+        }
+
+        // 2. 如果只是简单 COUNT
+        if (item.type === 'count') {
+            const countTarget = item.fields ? Object.values(item.fields)[0] : `${alias}.id`;
+            return `COUNT(${quote(countTarget!)}) AS ${quote(item.as)}`;
+        }
+
+
+        // 3. 🌟 新增：RAW（原始字段类型），不进行聚合，直接查出字段
+        if (item.type === 'raw') {
+            if (!item.fields || Object.keys(item.fields).length === 0) {
+                throw new Error(`select fields is required for raw type on table ${joinItem.table}`);
+            }
+            // 组装成：`user`.`username` AS `username`, `user`.`age` AS `age`
+            return Object.entries(item.fields)
+                .map(([aliasName, fieldPath]) => `${quote(fieldPath)} AS ${quote(aliasName)}`)
+                .join(", ");
+        }
+
+        throw new Error(`Unsupported join select type: ${item.type}`);
+    });
 }
 
 
