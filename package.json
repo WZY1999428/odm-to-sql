@@ -1,5 +1,5 @@
 {
-  "name": "mysql-odm",
+  "name": "mysql-dsl",
   "version": "0.0.2",
   "description": "High-performance, lightweight MySQL ODM with <1μs parsing speed and advanced aggregation support.",
   "type": "module",

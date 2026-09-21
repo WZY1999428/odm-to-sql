@@ -5,7 +5,10 @@ const total = await userRole.sum({
     field: "user.id",
     query: {
         "user.id": { $eq: { $col: "user_role.userId" } }
-    } as any,
+    },
+
+    // 不支持 使用   joins: [{ table: "system_user", type: "left", as: "user", on: { "user_role.userId": "user.id" } }]  加上也不会有任何效果
+
     joins: [
         {
             table: "system_user",

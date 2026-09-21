@@ -131,7 +131,7 @@ class Executor {
         const expr = mathType === 'COUNT' && !options.field ? '*' : (0, index_js_3.quote)(field);
         let sql = `SELECT ${mathType}(${expr}) AS total FROM ${(0, index_js_3.quote)(this.table)}`;
         if (joins.length)
-            sql += ` ${(0, parseJoin_js_1.default)(joins)}`;
+            sql += ` ${(0, parseJoin_js_1.default)(joins).joinSql}`;
         if (sqlWhere)
             sql += ` WHERE ${sqlWhere}`;
         return { sql, params: paramsWhere };

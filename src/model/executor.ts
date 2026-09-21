@@ -151,7 +151,7 @@ class Executor<T> {
 
         let sql = `SELECT ${mathType}(${expr}) AS total FROM ${quote(this.table)}`;
 
-        if (joins.length) sql += ` ${parseJoin(joins)}`;
+        if (joins.length) sql += ` ${parseJoin(joins).joinSql}`;
 
         if (sqlWhere) sql += ` WHERE ${sqlWhere}`;
 
