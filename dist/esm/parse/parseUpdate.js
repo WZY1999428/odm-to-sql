@@ -16,7 +16,7 @@ const ArithmeticOperatorMapKey = Object.keys(ArithmeticOperatorMap);
 const FunctionOperatorMap = {
     $max: "GREATEST",
     $min: "LEAST",
-    $concat: "CONCAT",
+    $concat: "CONCAT"
 };
 const FunctionOperatorMapKey = Object.keys(FunctionOperatorMap);
 const UpdateOperators = [...ArithmeticOperatorMapKey, ...FunctionOperatorMapKey];

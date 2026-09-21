@@ -28,6 +28,6 @@ export type UpdateOptions = {
 export type MathOptions<T> = {
     query?: Query<T>;
     field?: string;
-    joins?: Join<T>[];
+    joins?: Join[];
 };
 //# sourceMappingURL=options.d.ts.map

@@ -5,8 +5,6 @@ import parseJoin from "./parseJoin.js";
 export default function parseAggregate(table, options) {
     let sqlStr = "";
     let sleectSqlStr = "";
-    let specsSqlStr = "";
-    let joinsSqlStr = "";
     const params = [];
     const { fields, specs, query, group, having, sort, joins, limit, offset } = options;
     if (Array.isArray(fields)) {
@@ -35,13 +33,16 @@ export default function parseAggregate(table, options) {
             if (spec.$count)
                 specsSql.push(joinSpec("COUNT", spec.$count, params));
         }
-        sqlStr += `, ${specsSql.join(", ")}FROM ${quote(table)} `;
+        sqlStr += `, ${specsSql.join(", ")} `;
     }
+    sqlStr += `FROM ${quote(table)} `;
     if (joins) {
-        const joinsSql = parseJoin(joins);
+        const { joinSql, select } = parseJoin(joins);
+        if (select)
+            sleectSqlStr += `, ${select}`;
         // 4. 组装到主 SQL
         // 注意：JOIN 是紧跟在 FROM table 之后的
-        sqlStr += ` ${joinsSql}`;
+        sqlStr += ` ${joinSql}`;
     }
     if (query && Object.keys(query).length) {
         const { sql: sqlQuery, params: paramsQuery } = parseQuery(query);
@@ -65,7 +66,7 @@ export default function parseAggregate(table, options) {
     if (isFinite(offset)) {
         sqlStr += ` OFFSET ${offset}`;
     }
-    return { sql: sqlStr, params };
+    return { sql: `${sleectSqlStr} ${sqlStr}`, params };
 }
 function joinSpec(type, spec, params) {
     const parse = (spec) => {

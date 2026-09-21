@@ -7,7 +7,6 @@ exports.default = parseCase;
 const parseQuery_js_1 = __importDefault(require("./parseQuery.js"));
 const index_js_1 = require("../utils/index.js");
 const case_js_1 = require("./operators/case.js");
-const parseJsonArrayAgg_js_1 = require("./parseJsonArrayAgg.js");
 function parseCase(caseStmt) {
     if (!caseStmt) {
         return { sql: "", params: [] };
@@ -25,12 +24,6 @@ function parseCase(caseStmt) {
         whenClauses.push(`WHEN ${sql}`);
         if (typeof then === 'string') {
             whenClauses.push(` THEN ${(0, index_js_1.quote)(then)}`);
-        }
-        else if ((0, index_js_1.isObject)(then) && mode === case_js_1.CaseMode.JSON_ARRAYAGG) {
-            const jsonObject = (0, parseJsonArrayAgg_js_1.joinJsonObject)(then);
-            if (jsonObject) {
-                whenClauses.push(` THEN JSON_OBJECT(${jsonObject})`);
-            }
         }
     }
     if ($else && whenClauses.length > 0) {

@@ -12,15 +12,19 @@ exports.parseObjectKeys = parseObjectKeys;
  * 支持格式: "user.name" -> "`user`.`name`"
  */
 function quote(identifier) {
-    // 如果是 * 则不处理
+    // 1. 空值或 * 不处理
     if (!identifier || identifier === '*')
         return identifier;
-    // 处理已存在的反引号，防止重复添加
+    // 2. 新增：如果是函数、表达式或已包含空格/括号，直接原样返回（不加反引号）
+    if (identifier.includes("(") || identifier.includes(")") || identifier.includes(" ")) {
+        return identifier;
+    }
+    // 3. 清理已有的反引号，防止重复添加
     const clean = identifier.replace(/`/g, '');
     const parts = clean.split(".");
-    // 支持带点的路径（如 table.column）
+    // 4. 支持带点的路径（如 table.column -> `table`.`column`）
     return parts
-        .map(part => `\`${part}\``)
+        .map(part => (part === '*' ? '*' : `\`${part}\``)) // 确保 r.* 里的 * 不加反引号
         .join(".");
 }
 /**

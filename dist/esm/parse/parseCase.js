@@ -1,7 +1,6 @@
 import parseQuery from "./parseQuery.js";
-import { isObject, quote } from "../utils/index.js";
+import { quote } from "../utils/index.js";
 import { CaseMode } from "./operators/case.js";
-import { joinJsonObject } from "./parseJsonArrayAgg.js";
 export default function parseCase(caseStmt) {
     if (!caseStmt) {
         return { sql: "", params: [] };
@@ -19,12 +18,6 @@ export default function parseCase(caseStmt) {
         whenClauses.push(`WHEN ${sql}`);
         if (typeof then === 'string') {
             whenClauses.push(` THEN ${quote(then)}`);
-        }
-        else if (isObject(then) && mode === CaseMode.JSON_ARRAYAGG) {
-            const jsonObject = joinJsonObject(then);
-            if (jsonObject) {
-                whenClauses.push(` THEN JSON_OBJECT(${jsonObject})`);
-            }
         }
     }
     if ($else && whenClauses.length > 0) {
