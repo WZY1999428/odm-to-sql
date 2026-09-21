@@ -41,14 +41,16 @@ export declare const JoinTypeMap: {
     full: string;
     self: string;
 };
-interface NormalJoin {
+interface NormalJoin<T> {
     table: string;
+    jsonArrayAgg?: (JsonArrayAgg<T> | string)[];
     on: Record<string, string>;
     type?: JoinType;
     as?: string;
 }
-interface SelfJoin {
+interface SelfJoin<T> {
     table: string;
+    jsonArrayAgg?: (JsonArrayAgg<T> | string)[];
     on?: Record<string, string>;
     type: 'self';
     as: string;
@@ -57,9 +59,10 @@ export type JsonArrayAggFields = Record<string, string> | string;
 export type JsonArrayAgg<T> = {
     as: string;
     case?: Case<T>;
+    if?: boolean;
     fields: JsonArrayAggFields;
 };
-export type Join = NormalJoin | SelfJoin;
+export type Join<T> = NormalJoin<T> | SelfJoin<T>;
 export type AggregationOptions<T> = {
     fields: ColumnFields<T>[];
     jsonArrayAgg?: (JsonArrayAgg<T> | string)[];
@@ -68,7 +71,7 @@ export type AggregationOptions<T> = {
     group?: string[];
     having?: Query<T>;
     sort?: OrderBy<T>;
-    joins?: Join[];
+    joins?: Join<T>[];
     limit?: number;
     offset?: number;
 };

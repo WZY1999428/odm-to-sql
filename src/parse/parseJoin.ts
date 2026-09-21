@@ -17,7 +17,7 @@ const joinOperators: Record<string, string> = {
     $isNotNull: "IS NOT NULL",
 };
 
-function parseJoin(joins: Join[]): string {
+function parseJoin<T>(joins: Join<T>[]): string {
     if (!Array.isArray(joins)) {
         throw new Error("joins must be array");
     }

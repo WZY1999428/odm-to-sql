@@ -50,7 +50,6 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
 
         sqlStr += `, ${specsSql.join(", ")}FROM ${quote(table)} `
     }
-<<<<<<< HEAD
 
 
     if (joins) {
@@ -58,60 +57,6 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
         // 4. 组装到主 SQL
         // 注意：JOIN 是紧跟在 FROM table 之后的
         sqlStr += ` ${joinsSql}`;
-=======
-    specsSqlStr += `${specsSql.join(", ")}FROM ${quote(table)} `
-
-
-    if (joins) {
-        if (!Array.isArray) {
-            throw new Error("joins must be array");
-        }
-        let asIndex = 0;
-        const joinsSql = joins.map(item => {
-            if (!isObject(item)) {
-                throw new Error("joins must be array of object");
-            }
-            if (!item.table) {
-                throw new Error("table is required");
-            }
-
-            if (!isObject(item.on) && item.type != 'self') {
-                throw new Error("on is required");
-            }
-            // 1. 生成别名：优先用用户的，没有就自增
-            const tableAlias = item.as || `t${asIndex++}`;
-
-
-
-            if (Array.isArray(item.jsonArrayAgg)) {
-                const { sql: jsonArrayAggSql, params: jsonArrayAggParams } = parseJsonArrayAgg(item.jsonArrayAgg as JsonArrayAgg<T>[]);
-                params.push(...jsonArrayAggParams);
-                sleectSqlStr += ` ${jsonArrayAggSql} `
-            }
-
-            // 2. 解析 ON 条件 (这里的 value 以后记得接 $ref 逻辑)
-            let onStr = "";
-            if (item.on) {
-                onStr = Object.entries(item.on).map(([key, value]) => {
-                    return `${quote(key)} = ${quote(value)}`;
-                }).join(" AND ");
-            }
-
-            const joinOn = onStr ? ` ON ${onStr}` : "";
-            // 3. 根据类型生成 SQL
-            if (item.type === 'self') {
-                return ` INNER JOIN ${quote(item.table)} AS ${quote(tableAlias)}${joinOn}`;
-            } else {
-                const joinType = JoinTypeMap[item.type || 'inner']; // 默认 inner
-                return ` ${joinType} ${quote(item.table)} AS ${quote(tableAlias)}${joinOn}`;
-            }
-        }).join(" ")
-
-        // 4. 组装到主 SQL
-        // 注意：JOIN 是紧跟在 FROM table 之后的
-        joinsSqlStr += ` ${joinsSql}`;
-
->>>>>>> f42f74db5b2d6ba2c15b6b5c9a3c57566a8e4349
     }
 
 

@@ -2,10 +2,7 @@
   "name": "mysql-odm",
   "version": "0.0.2",
   "description": "High-performance, lightweight MySQL ODM with <1μs parsing speed and advanced aggregation support.",
-<<<<<<< HEAD
   "type": "module",
-=======
->>>>>>> f42f74db5b2d6ba2c15b6b5c9a3c57566a8e4349
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
