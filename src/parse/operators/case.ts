@@ -10,4 +10,4 @@ export enum CaseMode {
     JSON_ARRAYAGG = 'JSON_ARRAYAGG',
     DEFAULT = 'DEFAULT'
 }
-export type Case<V> = { $whens: When<V>[], $else: Else ,mode?: CaseMode}
+export type Case<V> = { $whens: When<V>[], $else?: Else ,mode?: CaseMode}
