@@ -77,7 +77,12 @@ export default function parseQuery<T>(query: Query<T>): { sql: string, params: a
 
     return {
         sql: parse(query),
-        params
+        params: params.map(param => {
+            if (param === undefined || param === "") {
+                return null;
+            }
+            return param;
+        })
     }
 
 }

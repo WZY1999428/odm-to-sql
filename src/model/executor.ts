@@ -192,7 +192,7 @@ class Executor<T> {
             if (fieldType === DataType.Json && typeof value === "object" && value != null) {
                 params.push(JSON.stringify(value));
             } else {
-                if (value === undefined || value === "" || value === null) params.push(null);
+                if (value === undefined || value === "") params.push(null);
                 else params.push(value);
             }
         }

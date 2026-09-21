@@ -166,7 +166,7 @@ class Executor {
                 params.push(JSON.stringify(value));
             }
             else {
-                if (value === undefined || value === "" || value === null)
+                if (value === undefined || value === "")
                     params.push(null);
                 else
                     params.push(value);

@@ -63,7 +63,12 @@ function parseQuery(query) {
     };
     return {
         sql: parse(query),
-        params
+        params: params.map(param => {
+            if (param === undefined || param === "") {
+                return null;
+            }
+            return param;
+        })
     };
 }
 function throwError(msg) {
