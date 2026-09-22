@@ -3,8 +3,6 @@ import type { ConnectionOptions } from "mysql2/promise"
 import { Schema } from "./schema/index.js";
 import Model from "./model/index.js";
 
-
-
 class MySqlODM {
     models: Map<string, Model<any>>
     conn: Client | null = null;

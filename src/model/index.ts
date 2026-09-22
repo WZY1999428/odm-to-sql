@@ -160,6 +160,15 @@ class Model<T> {
             }
         }
     }
+
+    // 字段相关
+
+    qualifyField(fieldName: string): string {
+        return this.schema.qualifyField(fieldName);
+    }
+    qualifyFields(fieldNames: string[]): string[] {
+        return this.schema.qualifyFields(fieldNames);
+    }
 }
 
 
