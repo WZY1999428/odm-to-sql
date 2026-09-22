@@ -195,6 +195,31 @@ class Schema {
         }
         this.hooks = hooks || {};
     }
+    /**
+         * 获取带有表名前缀的限定字段名（用于多表联查避免字段名冲突）
+         *
+         * @param fieldName - 需要限定的字段名称
+         * @returns 拼接表名后的限定字段名（格式：`table.fieldName`）
+         * @throws {Error} 当传入的字段名不存在于当前 Schema 中时抛出异常
+         */
+    qualifyField(fieldName) {
+        if (!this.fieldsMap.has(fieldName)) {
+            throw new Error(`field ${fieldName} not found`);
+        }
+        return `${this.table}.${fieldName}`;
+    }
+    /**
+     * 批量获取带有表名前缀的限定字段名数组
+     *
+     * @param fieldNames - 需要限定的字段名称数组
+     * @returns 拼接表名后的限定字段名数组（格式：`['table.field1', 'table.field2']`）
+     * @throws {Error} 当传入的参数不是数组，或包含不存在的字段名时抛出异常
+     */
+    qualifyFields(fieldNames) {
+        if (!Array.isArray(fieldNames))
+            throw new Error(`fieldNames must be an array`);
+        return fieldNames.map(name => this.qualifyField(name));
+    }
     toTableDefinition() {
         if (this.fieldsMap.size === 0) {
             throw new Error("no fields");

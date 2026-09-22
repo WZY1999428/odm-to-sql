@@ -40,19 +40,30 @@ export declare const JoinTypeMap: {
     full: string;
     self: string;
 };
-export interface JoinSelectOption {
-    /** 聚合模式：'jsonArray' (转成 JSON 数组) | 'count' | 'raw' (原始字段) */
-    type?: 'jsonArray' | 'count' | 'raw';
-    /** 目标表字段映射，例如 { id: 'r.id', name: 'r.name' } */
+interface JoinSelectBase {
     fields?: Record<string, string>;
-    /** 生成结果的别名，例如 'roles' */
-    as: string;
     /**
-     * 用于 COUNT 判断的主键或判定字段，例如 'user.id'
+     * 用于 COUNT 判断的主键或判定字段
      * 若不传，则默认取 fields 中的第一个字段
      */
     countField?: string;
 }
+export type JoinSelectOption = (JoinSelectBase & {
+    /** 聚合模式：jsonArray */
+    type: 'jsonArray';
+    /** 生成结果的别名，必填 */
+    as: string;
+}) | (JoinSelectBase & {
+    /** 聚合模式：count */
+    type: 'count';
+    /** 生成结果的别名，必填 */
+    as: string;
+}) | (JoinSelectBase & {
+    /** 原始字段 */
+    type?: 'raw';
+    /** 生成结果的别名，可选 */
+    as?: string;
+});
 interface NormalJoin {
     table: string;
     on: Record<string, string>;

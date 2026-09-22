@@ -101,11 +101,17 @@ function parseJoinSelect(joinItem) {
             const jsonObjectArgs = Object.entries(item.fields)
                 .map(([key, val]) => `'${key}', ${quote(val)}`)
                 .join(", ");
+            if (!item.as) {
+                throw new Error(`select as is required for jsonArray type on table ${joinItem.table}`);
+            }
             // 生成你需要的 IF(...) 语句
             return `IF(COUNT(${quote(firstField)}) = 0, JSON_ARRAY(), JSON_ARRAYAGG(JSON_OBJECT(${jsonObjectArgs}))) AS ${quote(item.as)}`;
         }
         // 2. 如果只是简单 COUNT
         if (item.type === 'count') {
+            if (!item.as) {
+                throw new Error(`select as is required for count type on table ${joinItem.table}`);
+            }
             const countTarget = item.fields ? Object.values(item.fields)[0] : `${alias}.id`;
             return `COUNT(${quote(countTarget)}) AS ${quote(item.as)}`;
         }

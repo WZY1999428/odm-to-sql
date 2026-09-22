@@ -41,6 +41,8 @@ declare class Model<T> {
      */
     withTransaction<P = any>(callback: (model: Executor<T>) => Promise<P>): Promise<P>;
     withPollConnection<P = any>(callback: (model: Executor<T>) => Promise<P>): Promise<P>;
+    qualifyField(fieldName: string): string;
+    qualifyFields(fieldNames: string[]): string[];
 }
 export default Model;
 //# sourceMappingURL=index.d.ts.map

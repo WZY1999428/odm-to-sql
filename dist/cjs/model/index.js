@@ -139,5 +139,12 @@ class Model {
             }
         }
     }
+    // 字段相关
+    qualifyField(fieldName) {
+        return this.schema.qualifyField(fieldName);
+    }
+    qualifyFields(fieldNames) {
+        return this.schema.qualifyFields(fieldNames);
+    }
 }
 exports.default = Model;
