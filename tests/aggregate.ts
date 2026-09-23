@@ -105,6 +105,7 @@ const paginationResult = await userRole.aggregate({
              * jsonArray一对多/多对多聚合数组IF(COUNT(r.id)=0, JSON_ARRAY(), JSON_ARRAYAGG(...))roles: [{ id: 1, name: 'admin' }]
              * count统计关联行数COUNT(r.id) AS roleCountroleCount: 3
              * raw传统连表打平查字段r.name AS roleNameroleName: "管理员"
+             * jsonObject 一对一/聚合对象 IF(ISNULL(r.id), NULL,JSON_OBJECT(....)) role: { id: 1, name: 'admin' }
              */
             select: [
                 {
@@ -125,6 +126,14 @@ const paginationResult = await userRole.aggregate({
                 {
                     "type": "raw",
                     "as": "userRaw",
+                    "fields": {
+                        "id": "user.id",
+                        "username": "user.username"
+                    }
+                },
+                {
+                    "type": "jsonObject",
+                    "as": "userJsonObject",
                     "fields": {
                         "id": "user.id",
                         "username": "user.username"

@@ -71,19 +71,11 @@ interface JoinSelectBase {
 export type JoinSelectOption =
     | (JoinSelectBase & {
         /** 聚合模式：jsonArray */
-        type: 'jsonArray';
+        type: 'jsonArray' | 'count' | 'jsonObject';
 
         /** 生成结果的别名，必填 */
         as: string;
-    })
-    | (JoinSelectBase & {
-        /** 聚合模式：count */
-        type: 'count';
-
-        /** 生成结果的别名，必填 */
-        as: string;
-    })
-    | (JoinSelectBase & {
+    }) | (JoinSelectBase & {
         /** 原始字段 */
         type?: 'raw';
 
