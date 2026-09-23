@@ -18,7 +18,7 @@ function parseAggregate(table, options) {
         if (!(0, index_js_1.isStringArray)(fields)) {
             throw new Error("fields must be string array");
         }
-        sleectSqlStr += ` ${fields.join(', ')}  `;
+        sleectSqlStr += ` ${fields.map(f => (0, index_js_1.quote)(f)).join(', ')}  `;
     }
     else {
         sleectSqlStr += ` * `;
