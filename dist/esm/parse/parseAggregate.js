@@ -11,7 +11,7 @@ export default function parseAggregate(table, options) {
         if (!isStringArray(fields)) {
             throw new Error("fields must be string array");
         }
-        sleectSqlStr += ` ${fields.join(', ')}  `;
+        sleectSqlStr += ` ${fields.map(f => quote(f)).join(', ')}  `;
     }
     else {
         sleectSqlStr += ` * `;
