@@ -19,6 +19,7 @@ function parseJoin(joins) {
         throw new Error("joins must be array");
     }
     let asIndex = 0;
+    const params = [];
     const joinsList = joins.map(item => {
         let select = [];
         if (!isObject(item)) {
@@ -56,9 +57,11 @@ function parseJoin(joins) {
                         }
                         // IN / NOT IN
                         if (operator === "$in" || operator === "$nin") {
+                            params.push(...operand);
                             return `${quote(key)} ${sqlOperator} (${operand.map(() => "?").join(", ")})`;
                         }
                         // 普通操作符
+                        params.push(operand);
                         return `${quote(key)} ${sqlOperator} ?`;
                     }).join(" AND ");
                 }
@@ -76,8 +79,9 @@ function parseJoin(joins) {
         }
     });
     return {
-        joinSql: joinsList.map(it => it.sql).join(" , "),
+        joinSql: joinsList.map(it => it.sql).join("  "),
         select: joinsList.flatMap(it => it.select).join(" , "),
+        params
     };
 }
 function parseJoinSelect(joinItem) {
@@ -115,6 +119,14 @@ function parseJoinSelect(joinItem) {
                 // 生成你需要的 IF(...) 语句
                 return `IF(COUNT(${quote(firstField)}) = 0, JSON_ARRAY(), JSON_ARRAYAGG(JSON_OBJECT(${jsonObjectArgs}))) AS ${quote(item.as)}`;
             }
+        }
+        // 2. 如果是 非对象数组内容
+        if (item.type === "array") {
+            if (!item.as) {
+                throw new Error(`select as is required for array type on table ${joinItem.table}`);
+            }
+            const countTarget = item.fields ? Object.values(item.fields)[0] : `${alias}.id`;
+            return `IF(COUNT(${quote(countTarget)}) = 0, JSON_ARRAY(), JSON_ARRAYAGG(${quote(countTarget)})) AS ${quote(item.as)}`;
         }
         // 2. 如果只是简单 COUNT
         if (item.type === 'count') {

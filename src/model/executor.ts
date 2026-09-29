@@ -133,13 +133,19 @@ class Executor<T> {
         return Number(result?.[0]?.total || 0);
     }
 
-
-    private buildMathSql<T>(mathType: mathType, options: MathOptions<T>): { sql: string; params: any[] } {
+    private buildMathSql<T>(
+        mathType: mathType,
+        options: MathOptions<T>
+    ): { sql: string; params: any[] } {
 
         let sqlWhere = "";
         let paramsWhere: any[] = [];
 
-        const { field = '*', joins = [] } = options;
+        const {
+            field = '*',
+            joins = [],
+            distinct
+        } = options;
 
         if (options.query && Object.keys(options.query).length) {
             const { sql, params } = parseQuery(options.query);
@@ -147,17 +153,55 @@ class Executor<T> {
             paramsWhere = params;
         }
 
-        const expr = mathType === 'COUNT' && !options.field ? '*' : quote(field);
+        let expr: string;
+
+        if (mathType === 'COUNT') {
+            if (!options.field) {
+                if (distinct) {
+                    throw new Error(
+                        'DISTINCT requires a specific field; COUNT(DISTINCT *) is not supported'
+                    );
+                }
+
+                expr = '*';
+            } else {
+                expr = quote(field);
+
+                if (distinct) {
+                    expr = `DISTINCT ${expr}`;
+                }
+            }
+        } else {
+            if (!options.field || field === '*') {
+                throw new Error(`${mathType} requires a specific field`);
+            }
+
+            expr = quote(field);
+
+            // DISTINCT 对 MAX / MIN 没有实际意义
+            if (distinct && mathType !== 'MAX' && mathType !== 'MIN') {
+                expr = `DISTINCT ${expr}`;
+            }
+        }
 
         let sql = `SELECT ${mathType}(${expr}) AS total FROM ${quote(this.table)}`;
 
-        if (joins.length) sql += ` ${parseJoin(joins).joinSql}`;
+        if (joins.length) {
+            sql += ` ${parseJoin(joins).joinSql}`;
+        }
 
-        if (sqlWhere) sql += ` WHERE ${sqlWhere}`;
+        if (sqlWhere) {
+            sql += ` WHERE ${sqlWhere}`;
+        }
 
-        return { sql, params: paramsWhere };
+        return {
+            sql,
+            params: paramsWhere
+        };
     }
 
+
+    
     async findMany<T>(query: Query<T>, options: FindOptions<T> = {}) {
         if (typeof this.schema.hooks.beforeFind === "function") {
             query = await this.schema.hooks.beforeFind(query) || query;

@@ -47,11 +47,12 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
     sqlStr += `FROM ${quote(table)} `
 
     if (joins) {
-        const { joinSql, select } = parseJoin(joins);
+        const { joinSql, select, params: joinParams } = parseJoin(joins);
         if (select) sleectSqlStr += `, ${select}`
         // 4. 组装到主 SQL
         // 注意：JOIN 是紧跟在 FROM table 之后的
         sqlStr += ` ${joinSql}`;
+        params.push(...joinParams);
     }
 
 

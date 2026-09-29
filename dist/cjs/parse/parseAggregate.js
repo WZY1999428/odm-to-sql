@@ -44,12 +44,13 @@ function parseAggregate(table, options) {
     }
     sqlStr += `FROM ${(0, index_js_1.quote)(table)} `;
     if (joins) {
-        const { joinSql, select } = (0, parseJoin_js_1.default)(joins);
+        const { joinSql, select, params: joinParams } = (0, parseJoin_js_1.default)(joins);
         if (select)
             sleectSqlStr += `, ${select}`;
         // 4. 组装到主 SQL
         // 注意：JOIN 是紧跟在 FROM table 之后的
         sqlStr += ` ${joinSql}`;
+        params.push(...joinParams);
     }
     if (query && Object.keys(query).length) {
         const { sql: sqlQuery, params: paramsQuery } = (0, parseQuery_js_1.default)(query);

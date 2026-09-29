@@ -122,19 +122,48 @@ class Executor {
     buildMathSql(mathType, options) {
         let sqlWhere = "";
         let paramsWhere = [];
-        const { field = '*', joins = [] } = options;
+        const { field = '*', joins = [], distinct } = options;
         if (options.query && Object.keys(options.query).length) {
             const { sql, params } = (0, index_js_1.parseQuery)(options.query);
             sqlWhere = sql;
             paramsWhere = params;
         }
-        const expr = mathType === 'COUNT' && !options.field ? '*' : (0, index_js_3.quote)(field);
+        let expr;
+        if (mathType === 'COUNT') {
+            if (!options.field) {
+                if (distinct) {
+                    throw new Error('DISTINCT requires a specific field; COUNT(DISTINCT *) is not supported');
+                }
+                expr = '*';
+            }
+            else {
+                expr = (0, index_js_3.quote)(field);
+                if (distinct) {
+                    expr = `DISTINCT ${expr}`;
+                }
+            }
+        }
+        else {
+            if (!options.field || field === '*') {
+                throw new Error(`${mathType} requires a specific field`);
+            }
+            expr = (0, index_js_3.quote)(field);
+            // DISTINCT 对 MAX / MIN 没有实际意义
+            if (distinct && mathType !== 'MAX' && mathType !== 'MIN') {
+                expr = `DISTINCT ${expr}`;
+            }
+        }
         let sql = `SELECT ${mathType}(${expr}) AS total FROM ${(0, index_js_3.quote)(this.table)}`;
-        if (joins.length)
+        if (joins.length) {
             sql += ` ${(0, parseJoin_js_1.default)(joins).joinSql}`;
-        if (sqlWhere)
+        }
+        if (sqlWhere) {
             sql += ` WHERE ${sqlWhere}`;
-        return { sql, params: paramsWhere };
+        }
+        return {
+            sql,
+            params: paramsWhere
+        };
     }
     async findMany(query, options = {}) {
         if (typeof this.schema.hooks.beforeFind === "function") {

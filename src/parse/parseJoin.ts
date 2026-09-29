@@ -17,11 +17,12 @@ const joinOperators: Record<string, string> = {
     $isNotNull: "IS NOT NULL",
 };
 
-function parseJoin(joins: Join[]): { joinSql: string; select: string } {
+function parseJoin(joins: Join[]): { joinSql: string; select: string, params: any[] } {
     if (!Array.isArray(joins)) {
         throw new Error("joins must be array");
     }
     let asIndex = 0;
+    const params: any[] = []
     const joinsList = joins.map(item => {
         let select: string[] = [];
         if (!isObject(item)) {
@@ -68,10 +69,12 @@ function parseJoin(joins: Join[]): { joinSql: string; select: string } {
 
                         // IN / NOT IN
                         if (operator === "$in" || operator === "$nin") {
+                            params.push(...(operand as any[]));
                             return `${quote(key)} ${sqlOperator} (${(operand as any[]).map(() => "?").join(", ")})`;
                         }
 
                         // 普通操作符
+                        params.push(operand);
                         return `${quote(key)} ${sqlOperator} ?`;
                     }).join(" AND ");
                 }
@@ -92,8 +95,9 @@ function parseJoin(joins: Join[]): { joinSql: string; select: string } {
     });
 
     return {
-        joinSql: joinsList.map(it => it.sql).join(" , "),
+        joinSql: joinsList.map(it => it.sql).join("  "),
         select: joinsList.flatMap(it => it.select).join(" , "),
+        params
     };
 }
 
@@ -141,7 +145,16 @@ function parseJoinSelect(joinItem: Join): string[] {
                 return `IF(COUNT(${quote(firstField)}) = 0, JSON_ARRAY(), JSON_ARRAYAGG(JSON_OBJECT(${jsonObjectArgs}))) AS ${quote(item.as)}`;
             }
         }
+        // 2. 如果是 非对象数组内容
+        if (item.type === "array") {
 
+            if (!item.as) {
+                throw new Error(`select as is required for array type on table ${joinItem.table}`);
+            }
+            const countTarget = item.fields ? Object.values(item.fields)[0] : `${alias}.id`;
+
+            return `IF(COUNT(${quote(countTarget!)}) = 0, JSON_ARRAY(), JSON_ARRAYAGG(${quote(countTarget!)})) AS ${quote(item.as)}`;
+        }
 
         // 2. 如果只是简单 COUNT
         if (item.type === 'count') {
