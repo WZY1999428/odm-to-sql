@@ -23,7 +23,8 @@ export const QueryOperatorMap = {
     '$nin': "NOT IN",
     '$like': "LIKE",
     '$nlike': "NOT LIKE",
-    "$between": "BETWEEN"
+    "$between": "BETWEEN",
+    "$select": "SELECT"
 };
 // 也就是：这个数组本身的类型
 // export type QueryOperators = keyof typeof QueryOperatorMap;
