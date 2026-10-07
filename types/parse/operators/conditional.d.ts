@@ -10,6 +10,7 @@ export declare const QueryOperatorMap: {
     readonly $like: "LIKE";
     readonly $nlike: "NOT LIKE";
     readonly $between: "BETWEEN";
+    readonly $select: "SELECT";
 };
 export interface QueryOperators<V> {
     /** 等于  {age:{$eq:1}} */
@@ -34,5 +35,11 @@ export interface QueryOperators<V> {
     $nlike?: string;
     /** 范围查询 */
     $between?: [V, V];
+    /** 子查询 */
+    $select?: {
+        table: string;
+        fields: string[];
+        query: Record<string, any>;
+    };
 }
 //# sourceMappingURL=conditional.d.ts.map

@@ -5,12 +5,33 @@ import type { AggregateOps, PipelineStages, AggregationOptions, AggregateOption,
 export { LogicalMap } from "./logical.js";
 export { QueryOperatorMap } from "./conditional.js";
 export { UpdateAtomicMap } from "./updateAtomic.js";
-export type Query<T> = {
+export type Fields = (string | Record<string, Select>)[];
+type QueryFields<T> = {
     [P in keyof T & string]?: T[P] | Condition<T[P]>;
-} & {
+};
+type QueryLogical<T> = {
     [K in Logical]?: K extends '$not' ? Query<T> : Query<T>[];
-} & {
-    [key: string]: any;
+};
+type QuerySpecial<T> = {
+    $select?: Select<T>;
+};
+export type Query<T = any> = QueryFields<T> & QueryLogical<T> & QuerySpecial<any> & Record<string, any>;
+export type SelectType = "raw" | "jsonObject" | "jsonArray" | "count";
+export type Select<T = any> = {
+    table: string;
+    type?: SelectType;
+    fields?: Extract<keyof T, string>[];
+    query?: Query<T>;
+    limit?: number;
+    offset?: number;
+};
+type Condition<V> = QueryOperators<V> & {
+    $between?: [V, V];
+    $in?: V[];
+    $nin?: V[];
+    $exists?: boolean;
+    $like?: string;
+    $nlike?: string;
 };
 type ArithmeticOperator<T> = Partial<Record<keyof T, number>>;
 export type Update<T> = {
@@ -26,14 +47,6 @@ export type Update<T> = {
     $json?: string;
 } & {
     [P in keyof T & string]?: T[P] | UpdateAtomic;
-};
-type Condition<V> = QueryOperators<V> & {
-    $between?: [V, V];
-    $in?: V[];
-    $nin?: V[];
-    $exists?: boolean;
-    $like?: string;
-    $nlike?: string;
 };
 export type mathType = 'SUM' | 'AVG' | 'MAX' | 'MIN' | 'COUNT';
 export type { Logical, QueryOperators, AggregateOps, PipelineStages, AggregateOption, AggregateFields, AggregationOptions, OneOrMany };

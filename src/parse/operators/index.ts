@@ -9,15 +9,47 @@ export { LogicalMap } from "./logical.js"
 export { QueryOperatorMap } from "./conditional.js"
 export { UpdateAtomicMap } from "./updateAtomic.js"
 
+export type Fields = (string | Record<string, Select>)[];
 
-export type Query<T> = {
+
+type QueryFields<T> = {
     [P in keyof T & string]?: T[P] | Condition<T[P]>;
-} & {
-    [K in Logical]?: K extends '$not' ? Query<T> : Query<T>[];
-} & {
-    [key: string]: any;
 };
 
+type QueryLogical<T> = {
+    [K in Logical]?: K extends '$not'
+    ? Query<T>
+    : Query<T>[];
+};
+
+type QuerySpecial<T> = {
+    $select?: Select<T>;
+};
+
+export type Query<T = any> =
+    QueryFields<T>
+    & QueryLogical<T>
+    & QuerySpecial<any>
+    & Record<string, any>;
+export type SelectType = "raw" | "jsonObject" | "jsonArray" | "count";
+
+export type Select<T = any> = {
+    table: string;
+    type?: SelectType;
+    fields?: Extract<keyof T, string>[];
+    query?: Query<T>;
+    limit?: number;
+    offset?: number;
+};
+// 针对单个字段的操作符提示
+type Condition<V> = QueryOperators<V> & {
+    $between?: [V, V]; // 特殊处理 $between
+    $in?: V[];         // 特殊处理 $in
+    $nin?: V[];        // 特殊处理 $nin
+    $exists?: boolean;
+    $like?: string;
+    $nlike?: string;
+};
 
 type ArithmeticOperator<T> = Partial<Record<keyof T, number>>;
 export type Update<T> = {
@@ -35,15 +67,7 @@ export type Update<T> = {
     [P in keyof T & string]?: T[P] | UpdateAtomic;
 }
 
-// 针对单个字段的操作符提示
-type Condition<V> = QueryOperators<V> & {
-    $between?: [V, V]; // 特殊处理 $between
-    $in?: V[];         // 特殊处理 $in
-    $nin?: V[];        // 特殊处理 $nin
-    $exists?: boolean;
-    $like?: string;
-    $nlike?: string;
-};
+
 export type mathType = 'SUM' | 'AVG' | 'MAX' | 'MIN' | 'COUNT';
 
 export type {

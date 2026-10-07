@@ -1,11 +1,9 @@
-import { isObject, isStringArray, quote } from "../utils/index.js";
+import { isObject, isStringArray, quote, buildFields } from "../utils/index.js";
+import { AggregationOptions, AggregateOption, OneOrMany } from "./operators/index.js"
 import parseQuery from "./parseQuery.js"
 import parseOrder from "./parseOrder.js";
 import parseJoin from "./parseJoin.js";
 
-import {
-    AggregationOptions, AggregateOption, OneOrMany
-} from "./operators/index.js"
 export default function parseAggregate<T>(table: string, options: AggregationOptions<T>): { sql: string, params: any } {
 
     let sqlStr: string = ""
@@ -14,10 +12,13 @@ export default function parseAggregate<T>(table: string, options: AggregationOpt
     const params: any[] = []
     const { fields, specs, query, group, having, sort, joins, limit, offset } = options;
     if (Array.isArray(fields)) {
-        if (!isStringArray(fields)) {
-            throw new Error("fields must be string array");
+        if (!Array.isArray(fields)) {
+            throw new Error("fields must be array");
         }
-        sleectSqlStr += ` ${fields.map(f => quote(f)).join(', ')}  `
+
+        const { fields: bFields, params: fieldParams } = buildFields(fields)
+        params.push(...fieldParams)
+        sleectSqlStr += ` ${bFields}  `
     } else {
         sleectSqlStr += ` * `
     }

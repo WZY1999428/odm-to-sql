@@ -1,4 +1,9 @@
 "use strict";
+/**
+ * 为 SQL 标识符（表名、字段名）添加反引号
+ * 支持格式: "name" -> "`name`"
+ * 支持格式: "user.name" -> "`user`.`name`"
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.quote = quote;
 exports.quoteAll = quoteAll;
@@ -6,11 +11,8 @@ exports.parseJson = parseJson;
 exports.isObject = isObject;
 exports.isStringArray = isStringArray;
 exports.parseObjectKeys = parseObjectKeys;
-/**
- * 为 SQL 标识符（表名、字段名）添加反引号
- * 支持格式: "name" -> "`name`"
- * 支持格式: "user.name" -> "`user`.`name`"
- */
+exports.buildFields = buildFields;
+const index_js_1 = require("../parse/index.js");
 function quote(identifier) {
     // 1. 空值或 * 不处理
     if (!identifier || identifier === '*')
@@ -77,4 +79,65 @@ function parseObjectKeys(datas) {
     }
     // 3. 用特殊字符连接，确保唯一性
     return parts.join('|');
+}
+function buildFields(fields = "*") {
+    if (fields === "*")
+        return { fields: "*", params: [] };
+    if (Array.isArray(fields)) {
+        let params = [];
+        const fieldList = fields.map(f => {
+            if (typeof f === "string") {
+                return quote(f);
+            }
+            else {
+                // 处理 Select 类型
+                const selectFields = [];
+                for (const [key, obj] of Object.entries(f)) {
+                    if (!obj.query) {
+                        throw new Error("Select query is required");
+                    }
+                    if (!obj.table) {
+                        throw new Error("Select table is required");
+                    }
+                    if (obj.type === 'count') {
+                        obj.fields = [`COUNT(${obj.fields?.[0] || '*'})`];
+                    }
+                    else if (obj.type === "raw") {
+                        if (!obj.fields || obj.fields.length === 0) {
+                            throw new Error("Select fields is required for raw type");
+                        }
+                        obj.fields = [obj.fields[0]];
+                    }
+                    else if (obj.type === "jsonObject") {
+                        obj.fields = [
+                            `JSON_OBJECT(${obj.fields?.map(f => `'${f}', ${f}`).join(', ')})`
+                        ];
+                    }
+                    else if (obj.type === "jsonArray") {
+                        obj.fields = [
+                            `JSON_ARRAYAGG(JSON_OBJECT(${obj.fields?.map(f => `'${f}', ${f}`).join(', ')}))`
+                        ];
+                    }
+                    let limitStr = '';
+                    if (obj.limit !== undefined && obj.limit !== null) {
+                        const limit = Number(obj.limit);
+                        const offset = obj.offset ? Number(obj.offset) : 0;
+                        // 推荐使用 MySQL 兼容性最好的 "LIMIT offset, count" 格式
+                        limitStr = ` LIMIT ${offset}, ${limit}`;
+                    }
+                    else {
+                        // 标量子查询/默认保护：默认限制 1 条
+                        limitStr = ' LIMIT 1';
+                    }
+                    const { sql, params: p } = (0, index_js_1.parseQuery)(obj.query);
+                    params.push(...p);
+                    selectFields.push(`(SELECT ${obj.fields?.join(', ') || '*'} FROM ${obj.table} WHERE ${sql} ${limitStr}) as ${key}`);
+                }
+                return selectFields.join(', ');
+            }
+        }).join(', ');
+        ;
+        return { fields: fieldList, params };
+    }
+    return { fields, params: [] }; // 如果是字符串且不是 *，建议也处理下或者直接透传
 }

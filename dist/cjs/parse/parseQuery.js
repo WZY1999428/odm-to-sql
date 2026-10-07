@@ -10,59 +10,8 @@ const regex_js_1 = __importDefault(require("./operators/regex.js"));
 // 校验是否为合法的逻辑子项数组
 function parseQuery(query) {
     const params = [];
-    const parse = (query) => {
-        const segments = [];
-        const keys = Object.keys(query);
-        for (let key of keys) {
-            let value = query[key]; // 现在不报错了
-            if (index_js_2.LogicalMap[key]) {
-                if (!Array.isArray(value)) {
-                    throwError(`Logical operator "${key}" requires an array of query objects. Received: ${JSON.stringify(value)}`);
-                }
-                // ✅ 新增：检查数组里每一项必须是对象
-                if (!value.every(v => typeof v === 'object' && v !== null && !Array.isArray(v))) {
-                    throwError(`Invalid item in "${key}": Each element must be a non-null plain object.`);
-                }
-                if (key == "$and" || key == "$or") {
-                    const arr = value.map(parse);
-                    segments.push(`(${arr.join(` ${index_js_2.LogicalMap[key]} `)})`);
-                }
-                else if (key === '$not') {
-                    segments.push(`NOT (${value.map(parse).join(' AND ')})`);
-                }
-                else if (key === '$nor') {
-                    const arr = value.map(parse);
-                    segments.push(`NOT (${arr.join(' OR ')})`);
-                }
-                continue;
-            }
-            if (key === "$regex") {
-                if (value && value instanceof RegExp) {
-                    segments.push(`${key} REGEXP ?`);
-                    params.push((0, regex_js_1.default)(value));
-                }
-                else {
-                    throwError(`The value for "$regex" must be a JavaScript RegExp instance. Received: ${typeof value}`);
-                }
-                continue;
-            }
-            // 处理 $json 操作符
-            if (key === "$json") {
-                for (let k in value) {
-                    const [column, ...path] = k.split('.');
-                    const jsonPath = `$.${path.join('.')}`;
-                    const newKey = `${column}->>'${jsonPath}'`;
-                    buildWhereClause(value[k], newKey, segments, params);
-                }
-                continue;
-            }
-            buildWhereClause(value, key, segments, params);
-        }
-        // 关键：在 join 前再次过滤，确保没有空隙
-        return segments.filter(Boolean).join(" AND ");
-    };
     return {
-        sql: parse(query),
+        sql: parse(query, params),
         params: params.map(param => {
             if (param === undefined || param === "") {
                 return null;
@@ -77,6 +26,57 @@ function throwError(msg) {
     error.name = "QueryValidationError";
     throw error;
 }
+function parse(query, params) {
+    const segments = [];
+    const keys = Object.keys(query);
+    for (let key of keys) {
+        let value = query[key]; // 现在不报错了
+        if (index_js_2.LogicalMap[key]) {
+            if (!Array.isArray(value)) {
+                throwError(`Logical operator "${key}" requires an array of query objects. Received: ${JSON.stringify(value)}`);
+            }
+            // ✅ 新增：检查数组里每一项必须是对象
+            if (!value.every(v => typeof v === 'object' && v !== null && !Array.isArray(v))) {
+                throwError(`Invalid item in "${key}": Each element must be a non-null plain object.`);
+            }
+            if (key == "$and" || key == "$or") {
+                const arr = value.map((v) => parse(v, params));
+                segments.push(`(${arr.join(` ${index_js_2.LogicalMap[key]} `)})`);
+            }
+            else if (key === '$not') {
+                segments.push(`NOT (${value.map((v) => parse(v, params)).join(' AND ')})`);
+            }
+            else if (key === '$nor') {
+                const arr = value.map((v) => parse(v, params));
+                segments.push(`NOT (${arr.join(' OR ')})`);
+            }
+            continue;
+        }
+        if (key === "$regex") {
+            if (value && value instanceof RegExp) {
+                segments.push(`${key} REGEXP ?`);
+                params.push((0, regex_js_1.default)(value));
+            }
+            else {
+                throwError(`The value for "$regex" must be a JavaScript RegExp instance. Received: ${typeof value}`);
+            }
+            continue;
+        }
+        // 处理 $json 操作符
+        if (key === "$json") {
+            for (let k in value) {
+                const [column, ...path] = k.split('.');
+                const jsonPath = `$.${path.join('.')}`;
+                const newKey = `${column}->>'${jsonPath}'`;
+                buildWhereClause(value[k], newKey, segments, params);
+            }
+            continue;
+        }
+        buildWhereClause(value, key, segments, params);
+    }
+    // 关键：在 join 前再次过滤，确保没有空隙
+    return segments.filter(Boolean).join(" AND ");
+}
 function buildWhereClause(value, key, segments, params) {
     // 2. 处理普通字段
     if (value && typeof value === 'object' && !Array.isArray(value) && value !== null) {
@@ -89,6 +89,36 @@ function buildWhereClause(value, key, segments, params) {
                 throwError(`Invalid operator "${op}" at "${key}"`);
             }
             const val = value[op];
+            if (op === "$select") {
+                if (typeof val !== "object") {
+                    throwError(`"$select" operator at "${key}" requires an object.`);
+                }
+                if (!val.table || typeof val.table !== "string") {
+                    throwError(`"$select" operator at "${key}" requires a "table" property.`);
+                }
+                if (val.fields && !Array.isArray(val.fields)) {
+                    throwError(`"$select" operator at "${key}" requires a "fields" property as an array.`);
+                }
+                if (!val.query || typeof val.query !== "object") {
+                    throwError(`"$select" operator at "${key}" requires a "query" property as an object.`);
+                }
+                let limitStr = '';
+                if (val.limit !== undefined && val.limit !== null) {
+                    const limit = Number(val.limit);
+                    const offset = val.offset ? Number(val.offset) : 0;
+                    // 推荐使用 MySQL 兼容性最好的 "LIMIT offset, count" 格式
+                    limitStr = ` LIMIT ${offset}, ${limit}`;
+                }
+                else {
+                    // 标量子查询/默认保护：默认限制 1 条
+                    limitStr = ' LIMIT 1';
+                }
+                if (val.offset) {
+                    limitStr += ` OFFSET ${val.offset}`;
+                }
+                segments.push(`${(0, index_js_1.quote)(key)} = (SELECT ${val.fields?.map((f) => (0, index_js_1.quote)(f)).join(", ") || "*"} FROM ${(0, index_js_1.quote)(val.table)} WHERE ${parse(val.query, params)}${limitStr})`);
+                continue;
+            }
             if (op === '$between') {
                 if (!Array.isArray(val)) {
                     throwError(`"$between" operator at "${key}" requires an array of exactly 2 numbers.`);

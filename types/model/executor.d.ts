@@ -10,7 +10,6 @@ declare class Executor<T> {
     private schema;
     private conn?;
     constructor(client: Client, table: string, schema: Schema<T>, conn?: newConnection | undefined);
-    private buildFields;
     private buildLimit;
     /** 开启事务 */
     beginTransaction(): Promise<void>;

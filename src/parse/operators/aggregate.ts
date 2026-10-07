@@ -1,6 +1,6 @@
-import { Query } from "./index.js";
+import { Query, Fields } from "./index.js";
 import { OrderBy } from "../parseOrder.js";
-import type { Case } from "./case.js";
+
 // 1. 聚合函数
 const AggregateFunctionsMap = {
     "$min": "MIN",
@@ -113,7 +113,7 @@ export type JsonArrayAggFields = Record<string, string> | string
 export type Join = NormalJoin | SelfJoin;
 
 export type AggregationOptions<T> = {
-    fields: ColumnFields<T>[];      // 支持 ['u.id', 'p.title']
+    fields: Fields;      // 支持 ['u.id', 'p.title']
     specs?: AggregateFields<T>[];      // 选填：你要聚合哪些字段？
     query?: Query<T>;              // 选填：过滤条件 (WHERE)
     group?: string[];         // 选填：按什么分组？

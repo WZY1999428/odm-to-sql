@@ -24,7 +24,8 @@ export const QueryOperatorMap = {
         '$nin': "NOT IN",
         '$like': "LIKE",
         '$nlike': "NOT LIKE",
-        "$between": "BETWEEN"
+        "$between": "BETWEEN",
+        "$select": "SELECT"
 } as const;
 
 
@@ -51,6 +52,12 @@ export interface QueryOperators<V> {
         $nlike?: string;
         /** 范围查询 */
         $between?: [V, V];
+        /** 子查询 */
+        $select?: {
+            table: string;
+            fields: string[];
+            query: Record<string, any>;
+        };
 }
 
 // 也就是：这个数组本身的类型

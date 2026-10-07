@@ -3,6 +3,12 @@
  * 支持格式: "name" -> "`name`"
  * 支持格式: "user.name" -> "`user`.`name`"
  */
+
+import type { Fields } from "../parse/operators/index.js"
+import { parseQuery } from "../parse/index.js";
+import { Select } from "../parse/operators/index.js";
+
+
 export function quote(identifier: string): string {
     // 1. 空值或 * 不处理
     if (!identifier || identifier === '*') return identifier;
@@ -53,19 +59,19 @@ export function isStringArray(value: any) {
 
 export function parseObjectKeys(datas: any): string {
     if (!isObject(datas)) return '';
-    
+
     let parts: string[] = [];
     const queue: any[] = [datas];
 
     while (queue.length) {
         const obj = queue.shift();
         // 1. 必须排序！保证 {a,b} 和 {b,a} 生成同一个 Key
-        const keys = Object.keys(obj).sort(); 
-        
+        const keys = Object.keys(obj).sort();
+
         for (const key of keys) {
             const item = obj[key];
             // 2. 加入分隔符，防止 userid 和 user.id 混淆
-            parts.push(key); 
+            parts.push(key);
 
             if (item && typeof item === 'object') {
                 if (Array.isArray(item)) {
@@ -81,5 +87,74 @@ export function parseObjectKeys(datas: any): string {
         }
     }
     // 3. 用特殊字符连接，确保唯一性
-    return parts.join('|'); 
+    return parts.join('|');
+}
+
+
+export function buildFields(fields: Fields | "*" = "*"): { fields: string, params: any[] } {
+    if (fields === "*") return { fields: "*", params: [] };
+    if (Array.isArray(fields)) {
+        let params: any[] = [];
+        const fieldList = fields.map(f => {
+            if (typeof f === "string") {
+                return quote(f);
+            } else {
+                // 处理 Select 类型
+                const selectFields: string[] = [];
+                for (const [key, obj] of Object.entries<Select>(f)) {
+                    if (!obj.query) {
+                        throw new Error("Select query is required");
+                    }
+                    if (!obj.table) {
+                        throw new Error("Select table is required");
+                    }
+
+                    if (obj.type === 'count') {
+                        obj.fields = [`COUNT(${obj.fields?.[0] || '*'})`];
+
+                    } else if (obj.type === "raw") {
+                        if (!obj.fields || obj.fields.length === 0) {
+                            throw new Error("Select fields is required for raw type");
+                        }
+
+                        obj.fields = [obj.fields[0]!];
+
+                    } else if (obj.type === "jsonObject") {
+                        obj.fields = [
+                            `JSON_OBJECT(${obj.fields?.map(f => `'${f}', ${f}`).join(', ')})`
+                        ];
+
+                    } else if (obj.type === "jsonArray") {
+                        obj.fields = [
+                            `JSON_ARRAYAGG(JSON_OBJECT(${obj.fields?.map(f => `'${f}', ${f}`).join(', ')}))`
+                        ];
+                    }
+
+
+                    let limitStr = '';
+
+                    if (obj.limit !== undefined && obj.limit !== null) {
+                        const limit = Number(obj.limit);
+                        const offset = obj.offset ? Number(obj.offset) : 0;
+                        // 推荐使用 MySQL 兼容性最好的 "LIMIT offset, count" 格式
+                        limitStr = ` LIMIT ${offset}, ${limit}`;
+                    } else {
+                        // 标量子查询/默认保护：默认限制 1 条
+                        limitStr = ' LIMIT 1';
+                    }
+
+
+
+                    const { sql, params: p } = parseQuery(obj.query as any);
+
+                    params.push(...p);
+
+                    selectFields.push(`(SELECT ${obj.fields?.join(', ') || '*'} FROM ${obj.table} WHERE ${sql} ${limitStr}) as ${key}`);
+                }
+                return selectFields.join(', ');
+            }
+        }).join(', ');;
+        return { fields: fieldList, params };
+    }
+    return { fields, params: [] }; // 如果是字符串且不是 *，建议也处理下或者直接透传
 }

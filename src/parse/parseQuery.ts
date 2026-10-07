@@ -3,80 +3,13 @@ import { LogicalMap, QueryOperatorMap } from "./operators/index.js";
 import type { Query, Logical, QueryOperators, } from "./operators/index.js";
 import jsRegexToMySQL from "./operators/regex.js"
 type OperatorKeys = keyof QueryOperators<any>;
+
 // 校验是否为合法的逻辑子项数组
 export default function parseQuery<T>(query: Query<T>): { sql: string, params: any[] } {
     const params: any[] = [];
 
-    const parse = (query: Query<T>) => {
-        const segments: string[] = [];
-        const keys = Object.keys(query) as Array<keyof Query<T>>;
-        for (let key of keys) {
-            let value = query[key]; // 现在不报错了
-            if (LogicalMap[key as Logical]) {
-                if (!Array.isArray(value)) {
-                    throwError(`Logical operator "${key}" requires an array of query objects. Received: ${JSON.stringify(value)}`)
-                }
-                // ✅ 新增：检查数组里每一项必须是对象
-                if (!value.every(v => typeof v === 'object' && v !== null && !Array.isArray(v))) {
-                    throwError(`Invalid item in "${key}": Each element must be a non-null plain object.`);
-                }
-
-
-                if (key == "$and" || key == "$or") {
-
-                    const arr = value.map(parse);
-
-                    segments.push(`(${arr.join(` ${LogicalMap[key as Logical]} `)})`);
-
-                } else if (key === '$not') {
-
-                    segments.push(`NOT (${value.map(parse).join(' AND ')})`);
-
-                } else if (key === '$nor') {
-
-                    const arr = value.map(parse);
-
-                    segments.push(`NOT (${arr.join(' OR ')})`);
-
-                }
-                continue;
-            }
-
-            if (key === "$regex") {
-
-                if (value && (value as unknown) instanceof RegExp) {
-
-                    segments.push(`${key} REGEXP ?`);
-
-                    params.push(jsRegexToMySQL(value));
-
-                } else {
-                    throwError(`The value for "$regex" must be a JavaScript RegExp instance. Received: ${typeof value}`);
-
-                }
-
-                continue;
-            }
-
-            // 处理 $json 操作符
-            if (key === "$json") {
-                for (let k in value) {
-                    const [column, ...path] = k.split('.');
-                    const jsonPath = `$.${path.join('.')}`;
-                    const newKey = `${column}->>'${jsonPath}'`;
-                    buildWhereClause(value[k], newKey, segments, params);
-                }
-                continue;
-            }
-            buildWhereClause(value, key, segments, params);
-
-        }
-        // 关键：在 join 前再次过滤，确保没有空隙
-        return segments.filter(Boolean).join(" AND ");
-    }
-
     return {
-        sql: parse(query),
+        sql: parse(query, params),
         params: params.map(param => {
             if (param === undefined || param === "") {
                 return null;
@@ -95,6 +28,77 @@ function throwError(msg: string): never {
 }
 
 
+
+
+function parse<T>(query: Query<T>, params: any[]) {
+    const segments: string[] = [];
+    const keys = Object.keys(query) as Array<keyof Query<T>>;
+    for (let key of keys) {
+        let value = query[key]; // 现在不报错了
+        if (LogicalMap[key as Logical]) {
+            if (!Array.isArray(value)) {
+                throwError(`Logical operator "${key}" requires an array of query objects. Received: ${JSON.stringify(value)}`)
+            }
+            // ✅ 新增：检查数组里每一项必须是对象
+            if (!value.every(v => typeof v === 'object' && v !== null && !Array.isArray(v))) {
+                throwError(`Invalid item in "${key}": Each element must be a non-null plain object.`);
+            }
+
+
+            if (key == "$and" || key == "$or") {
+
+                const arr = value.map((v) => parse(v, params));
+
+                segments.push(`(${arr.join(` ${LogicalMap[key as Logical]} `)})`);
+
+            } else if (key === '$not') {
+
+                segments.push(`NOT (${value.map((v) => parse(v, params)).join(' AND ')})`);
+
+            } else if (key === '$nor') {
+
+                const arr = value.map((v) => parse(v, params));
+
+                segments.push(`NOT (${arr.join(' OR ')})`);
+
+            }
+            continue;
+        }
+
+        if (key === "$regex") {
+
+            if (value && (value as unknown) instanceof RegExp) {
+
+                segments.push(`${key} REGEXP ?`);
+
+                params.push(jsRegexToMySQL(value));
+
+            } else {
+                throwError(`The value for "$regex" must be a JavaScript RegExp instance. Received: ${typeof value}`);
+
+            }
+
+            continue;
+        }
+
+        // 处理 $json 操作符
+        if (key === "$json") {
+            for (let k in value) {
+                const [column, ...path] = k.split('.');
+                const jsonPath = `$.${path.join('.')}`;
+                const newKey = `${column}->>'${jsonPath}'`;
+                buildWhereClause(value[k], newKey, segments, params);
+            }
+            continue;
+        }
+        buildWhereClause(value, key, segments, params);
+
+    }
+    // 关键：在 join 前再次过滤，确保没有空隙
+    return segments.filter(Boolean).join(" AND ");
+}
+
+
 function buildWhereClause<T>(value: any, key: string | number, segments: string[], params: any[]) {
     // 2. 处理普通字段
     if (value && typeof value === 'object' && !Array.isArray(value) && value !== null) {
@@ -110,6 +114,47 @@ function buildWhereClause<T>(value: any, key: string | number, segments: string[
             }
 
             const val = (value as Record<string, any>)[op as string];
+
+
+            if (op === "$select") {
+                if (typeof val !== "object") {
+                    throwError(`"$select" operator at "${key}" requires an object.`);
+                }
+
+                if (!val.table || typeof val.table !== "string") {
+                    throwError(`"$select" operator at "${key}" requires a "table" property.`);
+                }
+
+                if (val.fields && !Array.isArray(val.fields)) {
+                    throwError(`"$select" operator at "${key}" requires a "fields" property as an array.`);
+                }
+
+                if (!val.query || typeof val.query !== "object") {
+                    throwError(`"$select" operator at "${key}" requires a "query" property as an object.`);
+                }
+
+                let limitStr = '';
+
+                if (val.limit !== undefined && val.limit !== null) {
+                    const limit = Number(val.limit);
+                    const offset = val.offset ? Number(val.offset) : 0;
+
+                    // 推荐使用 MySQL 兼容性最好的 "LIMIT offset, count" 格式
+                    limitStr = ` LIMIT ${offset}, ${limit}`;
+                } else {
+                    // 标量子查询/默认保护：默认限制 1 条
+                    limitStr = ' LIMIT 1';
+                }
+
+
+                if (val.offset) {
+                    limitStr += ` OFFSET ${val.offset}`;
+                }
+
+                segments.push(`${quote(key as string)} = (SELECT ${val.fields?.map((f: string) => quote(f)).join(", ") || "*"} FROM ${quote(val.table)} WHERE ${parse(val.query, params)}${limitStr})`)
+                continue;
+            }
+
 
             if (op === '$between') {
                 if (!Array.isArray(val)) {

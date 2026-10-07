@@ -3,6 +3,7 @@
  * 支持格式: "name" -> "`name`"
  * 支持格式: "user.name" -> "`user`.`name`"
  */
+import type { Fields } from "../parse/operators/index.js";
 export declare function quote(identifier: string): string;
 /**
  * 批量处理多个字段名
@@ -12,4 +13,8 @@ export declare function parseJson(key: string): string;
 export declare function isObject(value: any): boolean;
 export declare function isStringArray(value: any): value is string[];
 export declare function parseObjectKeys(datas: any): string;
+export declare function buildFields(fields?: Fields | "*"): {
+    fields: string;
+    params: any[];
+};
 //# sourceMappingURL=index.d.ts.map

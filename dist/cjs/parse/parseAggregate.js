@@ -15,10 +15,12 @@ function parseAggregate(table, options) {
     const params = [];
     const { fields, specs, query, group, having, sort, joins, limit, offset } = options;
     if (Array.isArray(fields)) {
-        if (!(0, index_js_1.isStringArray)(fields)) {
-            throw new Error("fields must be string array");
+        if (!Array.isArray(fields)) {
+            throw new Error("fields must be array");
         }
-        sleectSqlStr += ` ${fields.map(f => (0, index_js_1.quote)(f)).join(', ')}  `;
+        const { fields: bFields, params: fieldParams } = (0, index_js_1.buildFields)(fields);
+        params.push(...fieldParams);
+        sleectSqlStr += ` ${bFields}  `;
     }
     else {
         sleectSqlStr += ` * `;

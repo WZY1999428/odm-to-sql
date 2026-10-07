@@ -18,14 +18,6 @@ class Executor {
         this.schema = schema;
         this.conn = conn;
     }
-    buildFields(fields = "*") {
-        if (fields === "*")
-            return "*";
-        if (Array.isArray(fields)) {
-            return fields.map(f => (0, index_js_3.quote)(f)).join(', ');
-        }
-        return fields; // 如果是字符串且不是 *，建议也处理下或者直接透传
-    }
     buildLimit(limit, offset) {
         let limitSql = "";
         if (isFinite(limit) && limit > 0) {
@@ -82,8 +74,10 @@ class Executor {
             query = await this.schema.hooks.beforeFind(query) || query;
         }
         const { fields = "*", sort = {} } = options;
-        const { sql, params } = (0, index_js_1.parseQuery)(query);
-        let joinSql = `SELECT ${this.buildFields(fields)} FROM ${(0, index_js_3.quote)(this.table)}`;
+        const { fields: bFields, params } = (0, index_js_3.buildFields)(fields);
+        const { sql, params: qParams } = (0, index_js_1.parseQuery)(query);
+        params.push(...qParams);
+        let joinSql = `SELECT ${bFields} FROM ${(0, index_js_3.quote)(this.table)}`;
         if (sql)
             joinSql += ` WHERE ${sql} `;
         joinSql += ` ${(0, index_js_1.parseOrder)(sort)} LIMIT 1`;
@@ -169,9 +163,11 @@ class Executor {
         if (typeof this.schema.hooks.beforeFind === "function") {
             query = await this.schema.hooks.beforeFind(query) || query;
         }
-        const { sql, params } = (0, index_js_1.parseQuery)(query);
         const { limit = 0, offset = 0, fields = "*", sort = {} } = options;
-        let joinSql = `SELECT ${this.buildFields(fields)} FROM ${(0, index_js_3.quote)(this.table)}`;
+        const { fields: bFields, params } = (0, index_js_3.buildFields)(fields);
+        const { sql, params: qParams } = (0, index_js_1.parseQuery)(query);
+        params.push(...qParams);
+        let joinSql = `SELECT ${bFields} FROM ${(0, index_js_3.quote)(this.table)}`;
         if (sql)
             joinSql += ` WHERE ${sql} `;
         joinSql += ` ${(0, index_js_1.parseOrder)(sort)} ${this.buildLimit(limit, offset)} `;
@@ -367,7 +363,6 @@ class Executor {
         }
         const { sql, params } = (0, index_js_1.parseAggregate)(this.table, options);
         const finalSql = `SELECT ${sql}`;
-        console.log(finalSql, params);
         const result = await this.execute(finalSql, params);
         if (typeof this.schema.hooks.AFterAggregate === "function") {
             return await this.schema.hooks.AFterAggregate(result);

@@ -4,7 +4,7 @@
     "types": [],
     "target": "esnext",
     "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": false,
     "strict": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",

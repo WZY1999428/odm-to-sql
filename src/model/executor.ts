@@ -4,28 +4,18 @@ import type { FindOptions, FindOneOptions, InsertOptions, insertManyOptions, Mat
 import { newConnection, } from "../client.js";
 import { Schema, DataType } from "../schema/index.js";
 import Client from "../client.js";
-import { quote } from "../utils/index.js";
+import { quote, buildFields } from "../utils/index.js";
 import parseJoin from "../parse/parseJoin.js"
 import { ResultSetHeader } from "mysql2";
-
-
 
 class Executor<T> {
     constructor(private client: Client,
         private table: string,
         private schema: Schema<T>,
         private conn?: newConnection,
-    ) {
+    ) { }
 
-    }
 
-    private buildFields(fields: string[] | "*" = "*"): string {
-        if (fields === "*") return "*";
-        if (Array.isArray(fields)) {
-            return fields.map(f => quote(f)).join(', ');
-        }
-        return fields; // 如果是字符串且不是 *，建议也处理下或者直接透传
-    }
 
     private buildLimit(limit: number, offset: number): string {
         let limitSql = "";
@@ -89,8 +79,10 @@ class Executor<T> {
             query = await this.schema.hooks.beforeFind(query) || query;
         }
         const { fields = "*", sort = {} } = options;
-        const { sql, params } = parseQuery(query);
-        let joinSql = `SELECT ${this.buildFields(fields)} FROM ${quote(this.table)}`;
+        const { fields: bFields, params } = buildFields(fields)
+        const { sql, params: qParams } = parseQuery(query);
+        params.push(...qParams)
+        let joinSql = `SELECT ${bFields} FROM ${quote(this.table)}`;
         if (sql) joinSql += ` WHERE ${sql} `;
         joinSql += ` ${parseOrder(sort)} LIMIT 1`;
         const result = await this.execute(joinSql, params) as T[];
@@ -201,14 +193,18 @@ class Executor<T> {
     }
 
 
-    
+
     async findMany<T>(query: Query<T>, options: FindOptions<T> = {}) {
         if (typeof this.schema.hooks.beforeFind === "function") {
             query = await this.schema.hooks.beforeFind(query) || query;
         }
-        const { sql, params } = parseQuery(query);
+
         const { limit = 0, offset = 0, fields = "*", sort = {} } = options;
-        let joinSql = `SELECT ${this.buildFields(fields)} FROM ${quote(this.table)}`;
+
+        const { fields: bFields, params } = buildFields(fields)
+        const { sql, params: qParams } = parseQuery(query);
+        params.push(...qParams)
+        let joinSql = `SELECT ${bFields} FROM ${quote(this.table)}`;
         if (sql) joinSql += ` WHERE ${sql} `;
         joinSql += ` ${parseOrder(sort)} ${this.buildLimit(limit, offset)} `;
         const results = await this.execute(joinSql, params);
@@ -415,8 +411,6 @@ class Executor<T> {
         }
         const { sql, params } = parseAggregate(this.table, options);
         const finalSql = `SELECT ${sql}`;
-        console.log(finalSql, params);
-
         const result = await this.execute(finalSql, params);
         if (typeof this.schema.hooks.AFterAggregate === "function") {
             return await this.schema.hooks.AFterAggregate(result);

@@ -1,4 +1,4 @@
-import { Query } from "./index.js";
+import { Query, Fields } from "./index.js";
 import { OrderBy } from "../parseOrder.js";
 declare const AggregateFunctionsMap: {
     readonly $min: "MIN";
@@ -30,7 +30,6 @@ export type AggregateFields<T> = {
         where: Query<unknown>;
     }> | keyof T | '*'>;
 };
-type ColumnFields<T> = keyof T | string;
 /** inner 内连接  left 左连接  right 右连接  full 全连接 self 自连接 */
 type JoinType = 'inner' | 'left' | 'right' | 'full' | 'self';
 export declare const JoinTypeMap: {
@@ -78,7 +77,7 @@ interface SelfJoin {
 export type JsonArrayAggFields = Record<string, string> | string;
 export type Join = NormalJoin | SelfJoin;
 export type AggregationOptions<T> = {
-    fields: ColumnFields<T>[];
+    fields: Fields;
     specs?: AggregateFields<T>[];
     query?: Query<T>;
     group?: string[];

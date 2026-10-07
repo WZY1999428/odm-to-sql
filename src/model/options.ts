@@ -1,11 +1,12 @@
 import type { OrderBy } from "../parse/parseOrder.js"
 export type { AggregationOptions } from "../parse/operators/index.js"
-import type { Query } from "../parse/operators/index.js"
+import type { Query, Fields } from "../parse/operators/index.js"
 import type { Join } from "../parse/operators/aggregate.js"
+
 
 export type FindOneOptions<T> = {
     // 字段
-    fields?: string[],
+    fields?: Fields,
     // 排序
     sort?: OrderBy<T>
 }
