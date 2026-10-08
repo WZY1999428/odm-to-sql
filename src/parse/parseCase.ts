@@ -13,15 +13,15 @@ export default function parseCase<T>(caseStmt: Case<T>): { sql: string; params: 
     }
     const whenClauses: string[] = [];
 
-    for (const item of $whens) {
-        const { when, then } = item;
-        const { sql, params: queryParams } = parseQuery(when);
-        params.push(...queryParams);
-        whenClauses.push(`WHEN ${sql}`);
-        if (typeof then === 'string') {
-            whenClauses.push(` THEN ${quote(then)}`);
-        }
-    }
+    // for (const item of $whens) {
+    //     const { when, then } = item;
+    //     const { sql, params: queryParams } = parseQuery(when);
+    //     params.push(...queryParams);
+    //     whenClauses.push(`WHEN ${sql}`);
+    //     if (typeof then === 'string') {
+    //         whenClauses.push(` THEN ${quote(then)}`);
+    //     }
+    // }
 
     if ($else && whenClauses.length > 0) {
         whenClauses.push(`ELSE ${quote($else as string)}`);

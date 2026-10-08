@@ -1,9 +1,9 @@
 import type { Logical } from "./logical.js"
-import type { QueryOperators } from "./conditional.js"
+import type { QueryOperators, Select } from "./conditional.js"
 import type { UpdateAtomic } from "./updateAtomic.js"
 import type {
     AggregateOps, PipelineStages, AggregationOptions, AggregateOption
-    , AggregateFields, OneOrMany,
+    , AggregateFields, OneOrMany, Join
 } from "./aggregate.js"
 export { LogicalMap } from "./logical.js"
 export { QueryOperatorMap } from "./conditional.js"
@@ -22,25 +22,19 @@ type QueryLogical<T> = {
     : Query<T>[];
 };
 
-type QuerySpecial<T> = {
-    $select?: Select<T>;
+type QuerySpecial = {
+    $select?: Select;
+    $exists?: Select;
 };
 
 export type Query<T = any> =
     QueryFields<T>
     & QueryLogical<T>
-    & QuerySpecial<any>
+    & QuerySpecial
     & Record<string, any>;
-export type SelectType = "raw" | "jsonObject" | "jsonArray" | "count";
 
-export type Select<T = any> = {
-    table: string;
-    type?: SelectType;
-    fields?: Extract<keyof T, string>[];
-    query?: Query<T>;
-    limit?: number;
-    offset?: number;
-};
+
+
 // 针对单个字段的操作符提示
 type Condition<V> = QueryOperators<V> & {
     $between?: [V, V]; // 特殊处理 $between

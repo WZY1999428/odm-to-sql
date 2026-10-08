@@ -12,6 +12,9 @@
         $nlike	不包含	{ name: { $nlike: "John" } }
         $between 在指定范围内	{ age: { $between: [20, 30] } }
 */
+import { Query } from "./index.js"
+import type { Join } from "./aggregate.js"
+export type SelectType = "raw" | "jsonObject" | "jsonArray" | "count";
 
 export const QueryOperatorMap = {
         '$eq': "=",
@@ -53,16 +56,20 @@ export interface QueryOperators<V> {
         $nlike?: string;
         /** 范围查询 */
         $between?: [V, V];
-
-        $exists: V;
+        $exists?: V;
         /** 子查询 */
-        $select?: {
-                table: string;
-                fields: string[];
-                query: Record<string, any>;
-        };
+        $select?: Select
 }
 
 // 也就是：这个数组本身的类型
 // export type QueryOperators = keyof typeof QueryOperatorMap;
 
+export type Select<T = any> = {
+        table: string;
+        type?: SelectType;
+        fields?: Extract<keyof T, string>[];
+        query?: Query<T>;
+        joins?: Join[],
+        limit?: number;
+        offset?: number;
+};

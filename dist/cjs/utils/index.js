@@ -110,12 +110,12 @@ function buildFields(fields = "*") {
                     }
                     else if (obj.type === "jsonObject") {
                         obj.fields = [
-                            `JSON_OBJECT(${obj.fields?.map(f => `'${f}', ${f}`).join(', ')})`
+                            `JSON_OBJECT(${obj.fields?.map((f) => `'${f}', ${f}`).join(', ')})`
                         ];
                     }
                     else if (obj.type === "jsonArray") {
                         obj.fields = [
-                            `JSON_ARRAYAGG(JSON_OBJECT(${obj.fields?.map(f => `'${f}', ${f}`).join(', ')}))`
+                            `JSON_ARRAYAGG(JSON_OBJECT(${obj.fields?.map((f) => `'${f}', ${f}`).join(', ')}))`
                         ];
                     }
                     let limitStr = '';

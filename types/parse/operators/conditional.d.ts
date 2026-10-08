@@ -1,3 +1,6 @@
+import { Query } from "./index.js";
+import type { Join } from "./aggregate.js";
+export type SelectType = "raw" | "jsonObject" | "jsonArray" | "count";
 export declare const QueryOperatorMap: {
     readonly $eq: "=";
     readonly $ne: "!=";
@@ -36,12 +39,17 @@ export interface QueryOperators<V> {
     $nlike?: string;
     /** 范围查询 */
     $between?: [V, V];
-    $exists: V;
+    $exists?: V;
     /** 子查询 */
-    $select?: {
-        table: string;
-        fields: string[];
-        query: Record<string, any>;
-    };
+    $select?: Select;
 }
+export type Select<T = any> = {
+    table: string;
+    type?: SelectType;
+    fields?: Extract<keyof T, string>[];
+    query?: Query<T>;
+    joins?: Join[];
+    limit?: number;
+    offset?: number;
+};
 //# sourceMappingURL=conditional.d.ts.map

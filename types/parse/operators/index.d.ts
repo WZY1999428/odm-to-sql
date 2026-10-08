@@ -1,5 +1,5 @@
 import type { Logical } from "./logical.js";
-import type { QueryOperators } from "./conditional.js";
+import type { QueryOperators, Select } from "./conditional.js";
 import type { UpdateAtomic } from "./updateAtomic.js";
 import type { AggregateOps, PipelineStages, AggregationOptions, AggregateOption, AggregateFields, OneOrMany } from "./aggregate.js";
 export { LogicalMap } from "./logical.js";
@@ -12,19 +12,11 @@ type QueryFields<T> = {
 type QueryLogical<T> = {
     [K in Logical]?: K extends '$not' ? Query<T> : Query<T>[];
 };
-type QuerySpecial<T> = {
-    $select?: Select<T>;
+type QuerySpecial = {
+    $select?: Select;
+    $exists?: Select;
 };
-export type Query<T = any> = QueryFields<T> & QueryLogical<T> & QuerySpecial<any> & Record<string, any>;
-export type SelectType = "raw" | "jsonObject" | "jsonArray" | "count";
-export type Select<T = any> = {
-    table: string;
-    type?: SelectType;
-    fields?: Extract<keyof T, string>[];
-    query?: Query<T>;
-    limit?: number;
-    offset?: number;
-};
+export type Query<T = any> = QueryFields<T> & QueryLogical<T> & QuerySpecial & Record<string, any>;
 type Condition<V> = QueryOperators<V> & {
     $between?: [V, V];
     $in?: V[];

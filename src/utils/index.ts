@@ -6,7 +6,7 @@
 
 import type { Fields } from "../parse/operators/index.js"
 import { parseQuery } from "../parse/index.js";
-import { Select } from "../parse/operators/index.js";
+import { Select } from "../parse/operators/conditional.js";
 
 
 export function quote(identifier: string): string {
@@ -121,12 +121,12 @@ export function buildFields(fields: Fields | "*" = "*"): { fields: string, param
 
                     } else if (obj.type === "jsonObject") {
                         obj.fields = [
-                            `JSON_OBJECT(${obj.fields?.map(f => `'${f}', ${f}`).join(', ')})`
+                            `JSON_OBJECT(${obj.fields?.map((f:any) => `'${f}', ${f}`).join(', ')})`
                         ];
 
                     } else if (obj.type === "jsonArray") {
                         obj.fields = [
-                            `JSON_ARRAYAGG(JSON_OBJECT(${obj.fields?.map(f => `'${f}', ${f}`).join(', ')}))`
+                            `JSON_ARRAYAGG(JSON_OBJECT(${obj.fields?.map((f:any) => `'${f}', ${f}`).join(', ')}))`
                         ];
                     }
 

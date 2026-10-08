@@ -1,7 +1,10 @@
 import { isObject, quote } from "../utils/index.js";
 import { LogicalMap, QueryOperatorMap } from "./operators/index.js";
+import type { Select } from "./operators/conditional.js";
+
 import type { Query, Logical, QueryOperators, } from "./operators/index.js";
 import jsRegexToMySQL from "./operators/regex.js"
+import parseJoin from "./parseJoin.js"
 type OperatorKeys = keyof QueryOperators<any>;
 
 // 校验是否为合法的逻辑子项数组
@@ -119,41 +122,9 @@ function buildWhereClause<T>(value: any, key: string | number, segments: string[
 
 
             if (op === "$select") {
-                if (typeof val !== "object") {
-                    throwError(`"$select" operator at "${key}" requires an object.`);
-                }
 
-                if (!val.table || typeof val.table !== "string") {
-                    throwError(`"$select" operator at "${key}" requires a "table" property.`);
-                }
+                segments.push(`${quote(key as string)} = (${parseSelect(key as string, val as Select, params)})`);
 
-                if (val.fields && !Array.isArray(val.fields)) {
-                    throwError(`"$select" operator at "${key}" requires a "fields" property as an array.`);
-                }
-
-                if (!val.query || typeof val.query !== "object") {
-                    throwError(`"$select" operator at "${key}" requires a "query" property as an object.`);
-                }
-
-                let limitStr = '';
-
-                if (val.limit !== undefined && val.limit !== null) {
-                    const limit = Number(val.limit);
-                    const offset = val.offset ? Number(val.offset) : 0;
-
-                    // 推荐使用 MySQL 兼容性最好的 "LIMIT offset, count" 格式
-                    limitStr = ` LIMIT ${offset}, ${limit}`;
-                } else {
-                    // 标量子查询/默认保护：默认限制 1 条
-                    limitStr = ' LIMIT 1';
-                }
-
-
-                if (val.offset) {
-                    limitStr += ` OFFSET ${val.offset}`;
-                }
-
-                segments.push(`${quote(key as string)} = (SELECT ${val.fields?.map((f: string) => quote(f)).join(", ") || "*"} FROM ${quote(val.table)} WHERE ${parse(val.query, params)}${limitStr})`)
                 continue;
             }
 
@@ -182,10 +153,17 @@ function buildWhereClause<T>(value: any, key: string | number, segments: string[
                         throwError(`"${op}" operator at "${key}" expects an array. Received: ${typeof val}`)
                     };
 
-                    if (!val.every((v: any) => typeof v === "number" || typeof v === "string")) {
+                    if (!val.every((v: any) => typeof v === "number" || typeof v === "string" || isObject(v))) {
                         throwError(`Invalid collection for "${op}" at "${key}": Elements must be strings or numbers. (Found invalid item in: ${JSON.stringify(val)})`)
                     }
-                    segments.push(`${key} ${QueryOperatorMap[op as OperatorKeys]} (${val.map(() => "?").join(",")})`);
+
+                    segments.push(`${key} ${QueryOperatorMap[op as OperatorKeys]} (${val.map((v) => {
+                        if (typeof v === "object") {
+                            return parseSelect(op, v, params)
+                        } else {
+                            return "?"
+                        }
+                    }).join(",")})`);
 
                     params.push(...val);
 
@@ -202,17 +180,18 @@ function buildWhereClause<T>(value: any, key: string | number, segments: string[
                     params.push(val);
 
                 } else {
-
                     if (isObject(val)) {
                         if (val.$col && typeof val.$col === 'string') {
                             const sqlOp = QueryOperatorMap[op as OperatorKeys];
                             segments.push(`${key} ${sqlOp}  ${quote(val.$col)}`);
+                        } else if (op === "$exists") {
+                            segments.push(`${quote(key as string)} = EXISTS (${parseSelect(key as string, val as Select, params)})`);
                         } else {
                             throwError(`"${op}" at "${key}" requires an object with a "$col" property. Received: ${JSON.stringify(val)}`);
                         }
                         continue;
                     }
-                  
+
 
                     if (val && typeof val !== "string" && typeof val !== 'number') {
                         throwError(`"${op}" at "${key}" only accepts string or number values. Received: ${typeof val}`)
@@ -234,4 +213,51 @@ function buildWhereClause<T>(value: any, key: string | number, segments: string[
         segments.push(`${key} = ?`);
         params.push(value);
     }
+}
+
+
+function parseSelect(key: string, val: Select, params: any[]) {
+    if (typeof val !== "object") {
+        throwError(`"$select" operator at "${key}" requires an object.`);
+    }
+
+    if (!val.table || typeof val.table !== "string") {
+        throwError(`"$select" operator at "${key}" requires a "table" property.`);
+    }
+
+    if (val.fields && !Array.isArray(val.fields)) {
+        throwError(`"$select" operator at "${key}" requires a "fields" property as an array.`);
+    }
+
+    if (!val.query || typeof val.query !== "object") {
+        throwError(`"$select" operator at "${key}" requires a "query" property as an object.`);
+    }
+
+    let limitStr = '';
+
+    if (val.limit !== undefined && val.limit !== null) {
+        const limit = Number(val.limit);
+        const offset = val.offset ? Number(val.offset) : 0;
+
+        // 推荐使用 MySQL 兼容性最好的 "LIMIT offset, count" 格式
+        limitStr = ` LIMIT ${offset}, ${limit}`;
+    }
+
+    let joinSql = "";
+    let select = ""
+
+    if (val.joins && Array.isArray(val.joins)) {
+        const { joinSql: joinSqlStr, select: joinSelect, params: joinParams } = parseJoin(val.joins);
+        params.push(...joinParams);
+        joinSql = joinSqlStr;
+        select = joinSelect;
+
+    }
+
+
+    if (val.offset) {
+        limitStr += ` OFFSET ${val.offset}`;
+    }
+
+    return ` SELECT ${select ? `${select}, ` : ``} ${val.fields?.map((f: string) => quote(f)).join(", ") || "*"} FROM ${quote(val.table)} ${joinSql}  WHERE ${parse(val.query, params)}${limitStr}  `;
 }
