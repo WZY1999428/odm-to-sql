@@ -6,9 +6,13 @@ import Model from "./model/index.js";
 class MySqlODM {
     models: Map<string, Model<any>>
     conn: Client | null = null;
+    debug: boolean = false;
 
-    constructor() {
+    constructor(options?: {
+        debug?: boolean
+    }) {
         this.models = new Map();
+        Model.debug = options?.debug || false;
         console.log("Database connected");
     }
 

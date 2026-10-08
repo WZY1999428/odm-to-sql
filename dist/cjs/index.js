@@ -9,8 +9,10 @@ const index_js_2 = __importDefault(require("./model/index.js"));
 class MySqlODM {
     models;
     conn = null;
-    constructor() {
+    debug = false;
+    constructor(options) {
         this.models = new Map();
+        index_js_2.default.debug = options?.debug || false;
         console.log("Database connected");
     }
     async use(options, type = 'pool') {

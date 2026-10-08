@@ -4,8 +4,10 @@ import Model from "./model/index.js";
 class MySqlODM {
     models;
     conn = null;
-    constructor() {
+    debug = false;
+    constructor(options) {
         this.models = new Map();
+        Model.debug = options?.debug || false;
         console.log("Database connected");
     }
     async use(options, type = 'pool') {

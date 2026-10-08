@@ -8,11 +8,13 @@ import { ResultSetHeader } from "mysql2"
 
 class Model<T> {
     ready: Promise<void>
+    static debug: boolean = false
     constructor(
         public table: string,
         public schema: Schema<T>,
-        public client: Cleint
+        public client: Cleint,
     ) {
+        Executor.debug = Model.debug;
         this.ready = this.createTable();
     };
 

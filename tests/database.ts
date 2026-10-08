@@ -1,6 +1,8 @@
 import { Schema, DataType } from "../src/schema/index.ts";
 import MySqlODM from "../src/index.ts"
-const odm = new MySqlODM();
+const odm = new MySqlODM({
+    debug: true
+});
 
 type User = {
     id?: number,

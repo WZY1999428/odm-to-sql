@@ -1,12 +1,14 @@
 import { parseOrder, parseQuery, parseUpdate, parseAggregate } from "../parse/index.js";
 import { DataType } from "../schema/index.js";
 import { quote, buildFields } from "../utils/index.js";
+import debug from "../utils/logger.js";
 import parseJoin from "../parse/parseJoin.js";
 class Executor {
     client;
     table;
     schema;
     conn;
+    static debug = false;
     constructor(client, table, schema, conn) {
         this.client = client;
         this.table = table;
@@ -59,6 +61,9 @@ class Executor {
         }
     }
     execute(joinSql, params) {
+        if (Executor.debug) {
+            debug.loggerSql(joinSql, params);
+        }
         if (this.conn) {
             return this.client.withConnExecute(this.conn, joinSql, params);
         }
@@ -77,7 +82,6 @@ class Executor {
             joinSql += ` WHERE ${sql} `;
         joinSql += ` ${parseOrder(sort)} LIMIT 1`;
         const result = await this.execute(joinSql, params);
-        console.log(joinSql, params);
         if (typeof this.schema.hooks.afterFind === "function") {
             return await this.schema.hooks.afterFind(result[0]);
         }

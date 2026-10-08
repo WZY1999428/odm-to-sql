@@ -5,7 +5,10 @@ import Model from "./model/index.js";
 declare class MySqlODM {
     models: Map<string, Model<any>>;
     conn: Client | null;
-    constructor();
+    debug: boolean;
+    constructor(options?: {
+        debug?: boolean;
+    });
     use(options: ConnectionOptions, type?: 'connection' | 'pool'): Promise<void>;
     model<T>(table: string, schema?: Schema<T>): Promise<Model<T>>;
     private buildColumnSQL;

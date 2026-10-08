@@ -6,12 +6,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const index_js_1 = require("../parse/index.js");
 const index_js_2 = require("../schema/index.js");
 const index_js_3 = require("../utils/index.js");
+const logger_js_1 = __importDefault(require("../utils/logger.js"));
 const parseJoin_js_1 = __importDefault(require("../parse/parseJoin.js"));
 class Executor {
     client;
     table;
     schema;
     conn;
+    static debug = false;
     constructor(client, table, schema, conn) {
         this.client = client;
         this.table = table;
@@ -64,6 +66,9 @@ class Executor {
         }
     }
     execute(joinSql, params) {
+        if (Executor.debug) {
+            logger_js_1.default.loggerSql(joinSql, params);
+        }
         if (this.conn) {
             return this.client.withConnExecute(this.conn, joinSql, params);
         }
@@ -82,7 +87,6 @@ class Executor {
             joinSql += ` WHERE ${sql} `;
         joinSql += ` ${(0, index_js_1.parseOrder)(sort)} LIMIT 1`;
         const result = await this.execute(joinSql, params);
-        console.log(joinSql, params);
         if (typeof this.schema.hooks.afterFind === "function") {
             return await this.schema.hooks.afterFind(result[0]);
         }

@@ -9,6 +9,7 @@ declare class Model<T> {
     schema: Schema<T>;
     client: Cleint;
     ready: Promise<void>;
+    static debug: boolean;
     constructor(table: string, schema: Schema<T>, client: Cleint);
     private createTable;
     private buildExecutor;

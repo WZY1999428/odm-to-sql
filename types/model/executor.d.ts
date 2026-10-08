@@ -9,6 +9,7 @@ declare class Executor<T> {
     private table;
     private schema;
     private conn?;
+    static debug: boolean;
     constructor(client: Client, table: string, schema: Schema<T>, conn?: newConnection | undefined);
     private buildLimit;
     /** 开启事务 */

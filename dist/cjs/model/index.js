@@ -9,10 +9,12 @@ class Model {
     schema;
     client;
     ready;
+    static debug = false;
     constructor(table, schema, client) {
         this.table = table;
         this.schema = schema;
         this.client = client;
+        executor_js_1.default.debug = Model.debug;
         this.ready = this.createTable();
     }
     ;

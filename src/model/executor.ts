@@ -5,11 +5,15 @@ import { newConnection, } from "../client.js";
 import { Schema, DataType } from "../schema/index.js";
 import Client from "../client.js";
 import { quote, buildFields } from "../utils/index.js";
+import debug from "../utils/logger.js";
+
 import parseJoin from "../parse/parseJoin.js"
 import { ResultSetHeader } from "mysql2";
 
 class Executor<T> {
-    constructor(private client: Client,
+    static debug: boolean = false
+    constructor(
+        private client: Client,
         private table: string,
         private schema: Schema<T>,
         private conn?: newConnection,
@@ -67,11 +71,17 @@ class Executor<T> {
     }
 
     execute(joinSql: string, params: any[]) {
+        
+        if (Executor.debug) {
+            debug.loggerSql(joinSql, params);
+        }
+
         if (this.conn) {
             return this.client.withConnExecute(this.conn, joinSql, params);
         }
         return this.client.execute(joinSql, params);
     }
+
 
 
     async findOne<T>(query: Query<T>, options: FindOneOptions<T> = {}) {
@@ -86,7 +96,7 @@ class Executor<T> {
         if (sql) joinSql += ` WHERE ${sql} `;
         joinSql += ` ${parseOrder(sort)} LIMIT 1`;
         const result = await this.execute(joinSql, params) as T[];
-        console.log(joinSql, params);
+
         if (typeof this.schema.hooks.afterFind === "function") {
             return await this.schema.hooks.afterFind(result[0] as any);
         }
@@ -96,6 +106,7 @@ class Executor<T> {
 
     async count<T>(options: MathOptions<T>): Promise<number> {
         const { sql, params } = this.buildMathSql('COUNT', options);
+        
         const result: any = await this.execute(sql, params)
         return Number(result?.[0]?.total || 0);
     }

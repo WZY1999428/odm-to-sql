@@ -4,10 +4,12 @@ class Model {
     schema;
     client;
     ready;
+    static debug = false;
     constructor(table, schema, client) {
         this.table = table;
         this.schema = schema;
         this.client = client;
+        Executor.debug = Model.debug;
         this.ready = this.createTable();
     }
     ;
