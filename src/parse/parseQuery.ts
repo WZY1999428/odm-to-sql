@@ -65,6 +65,8 @@ function parse<T>(query: Query<T>, params: any[]) {
             continue;
         }
 
+
+
         if (key === "$regex") {
 
             if (value && (value as unknown) instanceof RegExp) {
@@ -189,7 +191,6 @@ function buildWhereClause<T>(value: any, key: string | number, segments: string[
 
                 } else if (op == "$like" || op == "$nlike") {
 
-
                     if (val && typeof val !== "string" && typeof val !== 'number') {
 
                         throwError(`"${op}" at "${key}" only accepts string or number values. Received: ${typeof val}`)
@@ -211,7 +212,7 @@ function buildWhereClause<T>(value: any, key: string | number, segments: string[
                         }
                         continue;
                     }
-
+                  
 
                     if (val && typeof val !== "string" && typeof val !== 'number') {
                         throwError(`"${op}" at "${key}" only accepts string or number values. Received: ${typeof val}`)

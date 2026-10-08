@@ -1,6 +1,10 @@
 
 import { userRole } from "./database.ts";
 
+// 辅助函数 
+
+console.log(userRole.qualifyFields(["id", "userId"])) // [ 'user_role.id', 'user_role.userId' ]
+console.log(userRole.qualifyField("userId")) //   'user_role.userId'
 
 // 普通查询
 const result = await userRole.aggregate({
@@ -13,7 +17,6 @@ const result = await userRole.aggregate({
 
 })
 
-console.log("result", result);
 
 // 连表查询 
 const joinsResult = await userRole.aggregate({

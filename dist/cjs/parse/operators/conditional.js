@@ -27,7 +27,8 @@ exports.QueryOperatorMap = {
     '$like': "LIKE",
     '$nlike': "NOT LIKE",
     "$between": "BETWEEN",
-    "$select": "SELECT"
+    "$select": "SELECT",
+    "$exists": "EXISTS"
 };
 // 也就是：这个数组本身的类型
 // export type QueryOperators = keyof typeof QueryOperatorMap;

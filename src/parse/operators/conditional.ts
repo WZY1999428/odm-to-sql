@@ -25,7 +25,8 @@ export const QueryOperatorMap = {
         '$like': "LIKE",
         '$nlike': "NOT LIKE",
         "$between": "BETWEEN",
-        "$select": "SELECT"
+        "$select": "SELECT",
+        "$exists": "EXISTS"
 } as const;
 
 
@@ -52,11 +53,13 @@ export interface QueryOperators<V> {
         $nlike?: string;
         /** 范围查询 */
         $between?: [V, V];
+
+        $exists: V;
         /** 子查询 */
         $select?: {
-            table: string;
-            fields: string[];
-            query: Record<string, any>;
+                table: string;
+                fields: string[];
+                query: Record<string, any>;
         };
 }
 

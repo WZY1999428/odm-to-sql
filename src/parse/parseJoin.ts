@@ -145,6 +145,7 @@ function parseJoinSelect(joinItem: Join): string[] {
                 return `IF(COUNT(${quote(firstField)}) = 0, JSON_ARRAY(), JSON_ARRAYAGG(JSON_OBJECT(${jsonObjectArgs}))) AS ${quote(item.as)}`;
             }
         }
+        
         // 2. 如果是 非对象数组内容
         if (item.type === "array") {
 

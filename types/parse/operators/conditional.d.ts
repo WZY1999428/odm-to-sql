@@ -11,6 +11,7 @@ export declare const QueryOperatorMap: {
     readonly $nlike: "NOT LIKE";
     readonly $between: "BETWEEN";
     readonly $select: "SELECT";
+    readonly $exists: "EXISTS";
 };
 export interface QueryOperators<V> {
     /** 等于  {age:{$eq:1}} */
@@ -35,6 +36,7 @@ export interface QueryOperators<V> {
     $nlike?: string;
     /** 范围查询 */
     $between?: [V, V];
+    $exists: V;
     /** 子查询 */
     $select?: {
         table: string;
