@@ -1,6 +1,7 @@
 import { isObject, quote } from "../utils/index.js";
 import { LogicalMap, QueryOperatorMap } from "./operators/index.js";
 import jsRegexToMySQL from "./operators/regex.js";
+import parseJoin from "./parseJoin.js";
 // 校验是否为合法的逻辑子项数组
 export default function parseQuery(query) {
     const params = [];
@@ -84,33 +85,7 @@ function buildWhereClause(value, key, segments, params) {
             }
             const val = value[op];
             if (op === "$select") {
-                if (typeof val !== "object") {
-                    throwError(`"$select" operator at "${key}" requires an object.`);
-                }
-                if (!val.table || typeof val.table !== "string") {
-                    throwError(`"$select" operator at "${key}" requires a "table" property.`);
-                }
-                if (val.fields && !Array.isArray(val.fields)) {
-                    throwError(`"$select" operator at "${key}" requires a "fields" property as an array.`);
-                }
-                if (!val.query || typeof val.query !== "object") {
-                    throwError(`"$select" operator at "${key}" requires a "query" property as an object.`);
-                }
-                let limitStr = '';
-                if (val.limit !== undefined && val.limit !== null) {
-                    const limit = Number(val.limit);
-                    const offset = val.offset ? Number(val.offset) : 0;
-                    // 推荐使用 MySQL 兼容性最好的 "LIMIT offset, count" 格式
-                    limitStr = ` LIMIT ${offset}, ${limit}`;
-                }
-                else {
-                    // 标量子查询/默认保护：默认限制 1 条
-                    limitStr = ' LIMIT 1';
-                }
-                if (val.offset) {
-                    limitStr += ` OFFSET ${val.offset}`;
-                }
-                segments.push(`${quote(key)} = (SELECT ${val.fields?.map((f) => quote(f)).join(", ") || "*"} FROM ${quote(val.table)} WHERE ${parse(val.query, params)}${limitStr})`);
+                segments.push(`${quote(key)} = (${parseSelect(key, val, params)})`);
                 continue;
             }
             if (op === '$between') {
@@ -134,10 +109,17 @@ function buildWhereClause(value, key, segments, params) {
                         throwError(`"${op}" operator at "${key}" expects an array. Received: ${typeof val}`);
                     }
                     ;
-                    if (!val.every((v) => typeof v === "number" || typeof v === "string")) {
+                    if (!val.every((v) => typeof v === "number" || typeof v === "string" || isObject(v))) {
                         throwError(`Invalid collection for "${op}" at "${key}": Elements must be strings or numbers. (Found invalid item in: ${JSON.stringify(val)})`);
                     }
-                    segments.push(`${key} ${QueryOperatorMap[op]} (${val.map(() => "?").join(",")})`);
+                    segments.push(`${key} ${QueryOperatorMap[op]} (${val.map((v) => {
+                        if (typeof v === "object") {
+                            return parseSelect(op, v, params);
+                        }
+                        else {
+                            return "?";
+                        }
+                    }).join(",")})`);
                     params.push(...val);
                 }
                 else if (op == "$like" || op == "$nlike") {
@@ -152,6 +134,9 @@ function buildWhereClause(value, key, segments, params) {
                         if (val.$col && typeof val.$col === 'string') {
                             const sqlOp = QueryOperatorMap[op];
                             segments.push(`${key} ${sqlOp}  ${quote(val.$col)}`);
+                        }
+                        else if (op === "$exists") {
+                            segments.push(`${quote(key)} = EXISTS (${parseSelect(key, val, params)})`);
                         }
                         else {
                             throwError(`"${op}" at "${key}" requires an object with a "$col" property. Received: ${JSON.stringify(val)}`);
@@ -177,4 +162,37 @@ function buildWhereClause(value, key, segments, params) {
         segments.push(`${key} = ?`);
         params.push(value);
     }
+}
+function parseSelect(key, val, params) {
+    if (typeof val !== "object") {
+        throwError(`"$select" operator at "${key}" requires an object.`);
+    }
+    if (!val.table || typeof val.table !== "string") {
+        throwError(`"$select" operator at "${key}" requires a "table" property.`);
+    }
+    if (val.fields && !Array.isArray(val.fields)) {
+        throwError(`"$select" operator at "${key}" requires a "fields" property as an array.`);
+    }
+    if (!val.query || typeof val.query !== "object") {
+        throwError(`"$select" operator at "${key}" requires a "query" property as an object.`);
+    }
+    let limitStr = '';
+    if (val.limit !== undefined && val.limit !== null) {
+        const limit = Number(val.limit);
+        const offset = val.offset ? Number(val.offset) : 0;
+        // 推荐使用 MySQL 兼容性最好的 "LIMIT offset, count" 格式
+        limitStr = ` LIMIT ${offset}, ${limit}`;
+    }
+    let joinSql = "";
+    let select = "";
+    if (val.joins && Array.isArray(val.joins)) {
+        const { joinSql: joinSqlStr, select: joinSelect, params: joinParams } = parseJoin(val.joins);
+        params.push(...joinParams);
+        joinSql = joinSqlStr;
+        select = joinSelect;
+    }
+    if (val.offset) {
+        limitStr += ` OFFSET ${val.offset}`;
+    }
+    return ` SELECT ${select ? `${select}, ` : ``} ${val.fields?.map((f) => quote(f)).join(", ") || "*"} FROM ${quote(val.table)} ${joinSql}  WHERE ${parse(val.query, params)}${limitStr}  `;
 }
